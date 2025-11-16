@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from '@/contexts/AuthContext'; // ✅ New import
+import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import toast from "react-hot-toast";
 import {
   Instagram,
   Twitter,
@@ -10,133 +12,186 @@ import {
   Facebook,
   Linkedin,
   Music,
+  MessageCircle,
+  Globe,
 } from "lucide-react";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user, logout } = useAuth(); // ✅ Get user from context
+  const { user, logout, refreshUser } = useAuth();
   const [username, setUsername] = useState("User");
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Get username from Auth Context (cookies)
-  useEffect(() => {
-    if (user?.username) {
-      setUsername(user.username);
+  const platformIcons = {
+    instagram: <Instagram className="text-pink-500" />,
+    twitter: <Twitter className="text-sky-500" />,
+    facebook: <Facebook className="text-blue-600" />,
+    tiktok: <Music className="text-gray-900" />,
+    youtube: <Youtube className="text-red-600" />,
+    linkedin: <Linkedin className="text-blue-700" />,
+    telegram: <MessageCircle className="text-sky-400" />,
+  };
+
+  // Fetch only available logs every 10 seconds
+  const fetchLogs = async () => {
+    try {
+      const res = await fetch("/api/logs?availableOnly=true");
+      if (!res.ok) throw new Error("Failed to fetch logs");
+      const data = await res.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (user?.username) setUsername(user.username);
   }, [user]);
 
-  const categories = [
-    { id: "instagram", name: "Instagram", icon: <Instagram className="text-pink-500" /> },
-    { id: "twitter", name: "Twitter / X", icon: <Twitter className="text-sky-500" /> },
-    { id: "facebook", name: "Facebook", icon: <Facebook className="text-blue-600" /> },
-    { id: "tiktok", name: "TikTok", icon: <Music className="text-gray-900" /> },
-    { id: "youtube", name: "YouTube", icon: <Youtube className="text-red-600" /> },
-    { id: "linkedin", name: "LinkedIn", icon: <Linkedin className="text-blue-700" /> },
-  ];
+  const uniquePlatforms = [...new Set(logs.map((log) => log.platform.toLowerCase()))];
 
   const handleScroll = (id) => {
     const section = document.getElementById(id);
     if (section) section.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ✅ Add logout to your sidebar/header if needed
-  const handleLogout = () => {
-    logout();
+  const handleBuy = async (logId, logTitle) => {
+    if (!user) {
+      toast.error("Please log in to make a purchase");
+      return;
+    }
+
+    const loadingToast = toast.loading(`Processing purchase for ${logTitle}...`);
+
+    try {
+      const res = await fetch("/api/orders/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user._id, logId }),
+      });
+
+      const data = await res.json();
+      toast.dismiss(loadingToast);
+
+      if (!res.ok || data.error) {
+        toast.error(data.error || "Purchase failed");
+        return;
+      }
+
+      toast.success("Purchase successful!");
+
+      await refreshUser();
+      await fetchLogs();
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error("Something went wrong, please try again.");
+    }
   };
 
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-100">
-        {/* Sidebar - pass logout if your Sidebar has logout button */}
-        <Sidebar 
-          isOpen={isSidebarOpen} 
+
+        <Sidebar
+          isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          onLogout={handleLogout} // ✅ Optional: if your sidebar has logout
         />
 
-        {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-y-auto">
           <main className="p-6 space-y-10">
-            {/* Header - Now shows real username! */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-800">
-                  Welcome, {username}! 👋
+                  Welcome, {username}!
                 </h2>
                 <p className="text-gray-600 mt-1">
                   Available Social Media Accounts
                 </p>
-                {/* ✅ Real balance from backend */}
                 <p className="text-sm text-green-600 font-medium mt-1">
-                  Balance: ${user?.balance || 0}
+                  Balance: ₦{user?.balance?.toLocaleString() || 0}
                 </p>
               </div>
 
-              {/* Categories dropdown */}
               <div className="relative">
                 <select
                   onChange={(e) => handleScroll(e.target.value)}
                   className="border border-gray-300 bg-white text-gray-700 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                  {uniquePlatforms.map((platform) => (
+                    <option key={platform} value={platform}>
+                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* Category Sections - SAME */}
-            {categories.map((cat) => (
-              <section key={cat.id} id={cat.id} className="scroll-mt-20">
-                <div className="flex items-center gap-2 mb-4">
-                  {cat.icon}
-                  <h3 className="text-xl font-semibold text-gray-800">{cat.name}</h3>
-                </div>
+            {uniquePlatforms.length > 0 ? (
+              uniquePlatforms.map((platform) => {
+                const filteredLogs = logs.filter(
+                  (log) => log.platform.toLowerCase() === platform
+                );
+                const icon = platformIcons[platform] || (
+                  <Globe className="text-gray-600" />
+                );
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {/* // In the grid loop of categories */}
-                  {[...Array(6)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded-xl p-5 shadow hover:shadow-lg border border-gray-100 transition-transform transform hover:-translate-y-1"
-                    >
-                      <h3 className="font-semibold text-gray-800 mb-2">
-                        {cat.name} Account #{i + 1}
+                return (
+                  <section key={platform} id={platform} className="scroll-mt-20">
+                    <div className="flex items-center gap-2 mb-4">
+                      {icon}
+                      <h3 className="text-xl font-semibold text-gray-800 capitalize">
+                        {platform}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Followers: {Math.floor(Math.random() * 50)}k | Niche: Fashion
-                      </p>
-                      <button
-                        onClick={async () => {
-                          const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-                          const res = await fetch('/api/balance/update', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({ amount: 10, operation: 'subtract' }) // Example: deduct $10
-                          });
-                          const data = await res.json();
-                          if (res.ok) {
-                            alert(`Purchase successful! New balance: $${data.balance}`);
-                            // Optionally refresh user data
-                          } else {
-                            alert(data.error);
-                          }
-                        }}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-full py-2 rounded-lg hover:opacity-90 transition"
-                      >
-                        Buy Now
-                      </button>
                     </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+
+                    {loading ? (
+                      <p className="text-gray-500">Loading logs...</p>
+                    ) : filteredLogs.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {filteredLogs.map((log) => (
+                          <div
+                            key={log._id}
+                            className="bg-white rounded-xl p-5 shadow hover:shadow-lg border border-gray-100 transition-transform transform hover:-translate-y-1"
+                          >
+                            <h3 className="font-semibold text-gray-800 mb-2">
+                              {log.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-2">
+                              {log.description || "No description provided."}
+                            </p>
+                            <p className="text-sm text-gray-700 font-medium mb-4">
+                              Price: ₦{log.price.toLocaleString()}
+                            </p>
+                            <button
+                              onClick={() => handleBuy(log._id, log.title)}
+                              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-full py-2 rounded-lg hover:opacity-90 transition"
+                            >
+                              Buy Now
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">
+                        No logs available for {platform}
+                      </p>
+                    )}
+                  </section>
+                );
+              })
+            ) : (
+              <p className="text-gray-500">No platforms available yet.</p>
+            )}
           </main>
         </div>
       </div>

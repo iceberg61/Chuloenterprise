@@ -1,9 +1,9 @@
-import dbConnect from '../../../lib/dbConnect'; // Adjust path
+import dbConnect from '../../../lib/dbConnect'; 
 import User from '../../../models/User';
 import jwt from 'jsonwebtoken';
 
 export async function GET(request) {
-  console.log('🔑 AUTH VERIFY API HIT! Cookies:', request.headers.get('cookie'));
+  console.log(' AUTH VERIFY API HIT! Cookies:', request.headers.get('cookie'));
   
   try {
     await dbConnect();
@@ -25,7 +25,7 @@ export async function GET(request) {
 
     return Response.json({ user: { _id: user._id, username: user.username, balance: user.balance } });
   } catch (error) {
-    console.error('💥 AUTH VERIFY ERROR:', error.message);
+    console.error(' AUTH VERIFY ERROR:', error.message);
     return Response.json({ error: 'Invalid token' }, { status: 401 });
   }
 }

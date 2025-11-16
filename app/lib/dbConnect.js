@@ -29,10 +29,10 @@ async function dbConnect() {
 
   try {
     cached.conn = await cached.promise;
-    console.log('✅ MongoDB Connected!');
+    console.log(' MongoDB Connected!');
     return cached.conn;
   } catch (error) {
-    console.error('💥 MongoDB Connection Error:', error);
+    console.error(' MongoDB Connection Error:', error);
     throw error;
   }
 }

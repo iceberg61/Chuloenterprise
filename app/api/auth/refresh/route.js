@@ -1,10 +1,10 @@
 import User from '@/models/User';
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/dbConnect';
 import jwt from 'jsonwebtoken';
 
 export async function POST(req) {
-  await connectDB();
+  await dbConnect();
   
   try {
     const { refreshToken } = await req.json();

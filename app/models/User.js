@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   otp: { type: String },
   otpExpiry: { type: Date },
   otpVerified: { type: Boolean, default: false },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }, // 👈 new
 });
 
 userSchema.pre('save', async function (next) {
@@ -18,8 +19,9 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.methods.comparePassword = async function (password) {
-  return bcrypt.compare(password, this.password);
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
+
 
 export default mongoose.models.User || mongoose.model('User', userSchema);

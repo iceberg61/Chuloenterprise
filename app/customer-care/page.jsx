@@ -18,25 +18,70 @@ export default function CustomerCare() {
           <h2 className="text-xl font-semibold text-gray-800">Contact Us</h2>
 
           <div className="space-y-4 text-gray-700">
+
+            {/* Email */}
             <div className="flex items-center gap-3">
               <Mail className="w-5 h-5 text-blue-600" />
-              <span>Email: <a href="mailto:support@socialmarket.com" className="text-blue-600 hover:underline">support@socialmarket.com</a></span>
+              <span>
+                Email:{" "}
+                <a
+                  href="mailto:godstimegodwin111@gmail.com"
+                  className="text-blue-600 hover:underline"
+                >
+                  godstimegodwin111@gmail.com
+                </a>
+              </span>
             </div>
 
+            {/* Normal Phone */}
             <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-blue-600" />
-              <span>Phone: <a href="tel:+2348000000000" className="text-blue-600 hover:underline">+234 800 000 0000</a></span>
+              <Phone className="w-5 h-5 text-green-600" />
+              <span>
+                Phone:{" "}
+                <a
+                  href="tel:+2349153607825"
+                  className="text-green-600 hover:underline"
+                >
+                  09153607825
+                </a>
+              </span>
             </div>
 
+            {/* WhatsApp */}
             <div className="flex items-center gap-3">
-              <MessageCircle className="w-5 h-5 text-blue-600" />
-              <span>Chat Support: <a href="#" className="text-blue-600 hover:underline">Open Live Chat</a></span>
+              <MessageCircle className="w-5 h-5 text-green-500" />
+              <span>
+                WhatsApp:{" "}
+                <a
+                  href="https://wa.me/2348120502003"
+                  target="_blank"
+                  className="text-green-500 hover:underline"
+                >
+                  08120502003
+                </a>
+              </span>
             </div>
+
+            {/* Telegram Group */}
+            <div className="flex items-center gap-3">
+              <MessageCircle className="w-5 h-5 text-blue-500" />
+              <span>
+                Telegram Group:{" "}
+                <a
+                  href="https://t.me/chuloenterprise"
+                  target="_blank"
+                  className="text-blue-500 hover:underline"
+                >
+                  Join Group
+                </a>
+              </span>
+            </div>
+
           </div>
         </section>
 
         {/* Social Links */}
-        <section className="bg-white border rounded-2xl shadow-sm p-6 space-y-4">
+        {/* <section className="bg-white border rounded-2xl shadow-sm p-6 space-y-4">
           <h2 className="text-xl font-semibold text-gray-800 text-center">Connect With Us</h2>
           <p className="text-gray-600 text-center">Follow us on social media for updates and support.</p>
 
@@ -51,7 +96,7 @@ export default function CustomerCare() {
               <Facebook className="w-7 h-7" />
             </a>
           </div>
-        </section>
+        </section> */}
 
         {/* Help Note */}
         <div className="text-center text-gray-600">

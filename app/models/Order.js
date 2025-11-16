@@ -4,6 +4,7 @@ const OrderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     email: { type: String, required: true },
+    logId: { type: mongoose.Schema.Types.ObjectId, ref: "Log", required: true }, // 🔥 important
     product: { type: String, required: true },
     qty: { type: Number, default: 1 },
     amount: { type: Number, required: true },

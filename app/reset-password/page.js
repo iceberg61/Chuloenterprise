@@ -11,32 +11,34 @@ export default function ResetPassword({ searchParams }) {
   const router = useRouter();
   const { token } = searchParams;
 
-  const handleReset = async (e) => {
-    e.preventDefault();
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
+ const handleReset = async (e) => {
+  e.preventDefault();
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const res = await fetch('/api/auth/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: decoded.userId, password })
-      });
-      const data = await res.json();
+  if (!password || password.length < 6) {
+    setError("Password must be at least 6 characters");
+    return;
+  }
 
-      if (res.ok) {
-        setSuccess(true);
-        setTimeout(() => router.push('/login'), 2000);
-      } else {
-        setError(data.error);
-      }
-    } catch (err) {
-      setError('Invalid or expired token');
+  try {
+    const res = await fetch('/api/auth/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setSuccess(true);
+      setTimeout(() => router.push('/login'), 2000);
+    } else {
+      setError(data.error);
     }
-  };
+  } catch (err) {
+    setError("Something went wrong");
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -2,7 +2,7 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
-import sendEmail from '@/lib/sendEmail'; // ✅ Add this
+import sendEmail from '@/lib/sendEmail'; 
 
 export async function POST(request) {
   try {
@@ -31,16 +31,16 @@ export async function POST(request) {
       { expiresIn: '15m' }
     );
 
-    // ✅ Send Welcome Email
+    //  Send Welcome Email
     await sendEmail({
       to: email,
-      subject: 'Welcome to Social Logs 🎉',
+      subject: 'Welcome to Social Logs ',
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Hey ${username}, welcome to <span style="color:#2563eb;">Social Logs</span>!</h2>
-          <p>Your account has been successfully created 🎊</p>
+          <p>Your account has been successfully created </p>
           <p>You can now buy, sell, and manage your social media logs with ease.</p>
-          <p>We’re excited to have you on board 🚀</p>
+          <p>We’re excited to have you on board </p>
           <br/>
           <p style="font-size:14px;color:#888;">If you didn’t sign up for this account, please ignore this email.</p>
         </div>

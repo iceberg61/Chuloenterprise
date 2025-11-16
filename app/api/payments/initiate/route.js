@@ -10,7 +10,7 @@ export async function POST(req) {
     await dbConnect();
 
     const { amount } = await req.json();
-    const cookieStore = await cookies(); // ← ADD await
+    const cookieStore = await cookies(); 
     const token = cookieStore.get('token')?.value;
 
     if (!token) {

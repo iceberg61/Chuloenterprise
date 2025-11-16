@@ -10,10 +10,10 @@ export async function sendEmail({ to, subject, html }) {
       subject,
       html,
     });
-    console.log('✅ Email sent:', data);
+    console.log(' Email sent:', data);
     return true;
   } catch (error) {
-    console.error('❌ Email error:', error);
+    console.error(' Email error:', error);
     return false;
   }
 }

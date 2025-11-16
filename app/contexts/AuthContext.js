@@ -1,8 +1,8 @@
-// contexts/AuthContext.jsx
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
@@ -13,9 +13,7 @@ export function AuthProvider({ children }) {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch('/api/auth/me', { 
-        credentials: 'include' 
-      });
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (res.ok) {
         const { user } = await res.json();
         setUser(user);
@@ -29,60 +27,77 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Load user on mount
   useEffect(() => {
     fetchUser();
   }, []);
 
+  // ✅ LOGIN FUNCTION
   const login = async (username, password, rememberMe = false) => {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, rememberMe }),
-  });
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, rememberMe }),
+    });
 
-  if (res.ok) {
-    await fetchUser();
+    if (res.ok) {
+      await fetchUser();
+      const redirectTo =
+        new URLSearchParams(window.location.search).get('redirect') || '/';
+      window.location.href = redirectTo;
+      return { success: true };
+    }
 
-    // Get redirect from URL (e.g., /login?redirect=/orders)
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectTo = urlParams.get('redirect') || '/';
+    const data = await res.json();
+    return { success: false, error: data.error || 'Login failed' };
+  };
 
-    // Full reload to wipe state and go to correct page
-    window.location.href = redirectTo;
-    return { success: true };
-  }
+  // ✅ NEW SIGNUP FUNCTION
+  const signup = async (username, email, password) => {
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password }),
+      });
 
-  const data = await res.json();
-  return { success: false, error: data.error || 'Login failed' };
-};
+      const data = await res.json();
 
+      if (!res.ok) throw new Error(data.error || 'Signup failed');
+
+      setUser(data.user);
+      toast.success('Account created successfully!');
+      return { success: true };
+    } catch (err) {
+      toast.error(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  // ✅ LOGOUT FUNCTION
   const logout = async () => {
     try {
-      // Call server to clear httpOnly cookie
-      await fetch('/api/auth/logout', { 
-        method: 'POST', 
-        credentials: 'include' 
-      });
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (err) {
       console.warn('Logout API failed, clearing locally');
     }
-
-    // Clear React state
     setUser(null);
-
-    // Full page reload to wipe navbar, sidebar, and all state
     window.location.href = '/login';
   };
 
+  const refreshUser = fetchUser;
+
+  // ✅ Include signup here
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      loading, 
-      refresh: fetchUser 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        logout,
+        loading,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

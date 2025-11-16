@@ -38,7 +38,7 @@ export default function AuthPage() {
         className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
       >
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          {isLogin ? "Welcome Back 👋" : "Create an Account 🚀"}
+          {isLogin ? "Welcome Back " : "Create an Account "}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">

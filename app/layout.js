@@ -1,18 +1,25 @@
 import "./globals.css";
 import ClientLayout from "./components/ClientLayout";
-import { AuthProvider } from './contexts/AuthContext'; // ✅ Add this
+import { AuthProvider } from "./contexts/AuthContext";
+import { Toaster } from "react-hot-toast"; 
 
 export const metadata = {
-  title: "Social Market",
+  title: "Chuloenterprise",
   description: "Buy verified social media accounts",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="overflow-x-hidden mt-16">
-        <AuthProvider> {/* ✅ Wrap everything */}
-          <ClientLayout>{children}</ClientLayout>
+      <body className="overflow-x-hidden mt-16 bg-gray-50 text-gray-900">
+        {/*  Wrap everything with AuthProvider */}
+        <AuthProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+
+          {/*  Global toast notifications */}
+          <Toaster position="top-right" reverseOrder={false} />
         </AuthProvider>
       </body>
     </html>

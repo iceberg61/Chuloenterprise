@@ -8,22 +8,22 @@ export async function POST(req) {
     await dbConnect();
     const { email } = await req.json();
 
-    // 🧠 Check if user exists
+    //  Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 🧮 Generate 6-digit OTP
+    //  Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min expiry
 
-    // 📝 Save OTP to user
+    //  Save OTP to user
     user.otp = otp;
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    // 📧 Send OTP via Resend
+    //  Send OTP via Resend
     await sendEmail({
       to: email,
       subject: 'Your Social Password Reset Code',
@@ -39,7 +39,7 @@ export async function POST(req) {
       `,
     });
 
-    console.log(`📩 OTP sent to ${email}: ${otp}`);
+    console.log(` OTP sent to ${email}: ${otp}`);
     return NextResponse.json({ message: 'OTP sent successfully' });
   } catch (error) {
     console.error('Forgot Password Error:', error);

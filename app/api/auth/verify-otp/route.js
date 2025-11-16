@@ -12,7 +12,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // ✅ Check OTP validity
+    //  Check OTP validity
     if (user.otp !== otp) {
       return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
     }
@@ -21,7 +21,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
     }
 
-    // ✅ Mark OTP as verified
+    //  Mark OTP as verified
     user.otpVerified = true;
     await user.save();
 

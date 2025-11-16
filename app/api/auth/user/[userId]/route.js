@@ -2,7 +2,7 @@ import dbConnect from '../../../../lib/dbConnect'; // Adjust path
 import User from '../../../../models/User';
 
 export async function GET(request, { params }) {
-  console.log('🔑 USER FETCH API HIT! UserID:', params.userId);
+  console.log(' USER FETCH API HIT! UserID:', params.userId);
   
   try {
     await dbConnect();
@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
     
     return Response.json({ user: { _id: user._id, username: user.username, balance: user.balance } });
   } catch (error) {
-    console.error('💥 USER FETCH ERROR:', error);
+    console.error(' USER FETCH ERROR:', error);
     return Response.json({ error: 'Server error' }, { status: 500 });
   }
 }

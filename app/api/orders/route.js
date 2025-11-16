@@ -4,13 +4,13 @@ import Order from "@/models/Order";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-export const runtime = "nodejs"; // ✅ ensures crypto/jwt works fine
+export const runtime = "nodejs"; //  ensures crypto/jwt works fine
 
 export async function GET() {
   try {
     await dbConnect();
 
-    // ✅ Await the cookies() call
+    //  Await the cookies() call
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -20,10 +20,10 @@ export async function GET() {
 
     console.log("Extracted token from cookie:", token);
 
-    // ✅ Verify JWT
+    //  Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ Fetch orders for this user
+    //  Fetch orders for this user
     const orders = await Order.find({ email: decoded.email }).sort({ createdAt: -1 });
 
     return NextResponse.json(orders);

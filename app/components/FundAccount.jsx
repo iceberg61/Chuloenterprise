@@ -14,7 +14,7 @@ export default function FundAccount() {
   const [expandedPayment, setExpandedPayment] = useState(null);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
 
-  const { user, refreshUser } = useAuth(); // ← token REMOVED
+  const { user, refreshUser } = useAuth(); 
   const router = useRouter();
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function FundAccount() {
       }
       try {
         const res = await fetch("/api/payments", {
-          credentials: "include", // ← Sends httpOnly cookie
+          credentials: "include", 
         });
         const data = await res.json();
         setPayments(res.ok ? data.payments || [] : []);
@@ -70,7 +70,7 @@ export default function FundAccount() {
     try {
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
-        credentials: "include", // ← Sends httpOnly cookie
+        credentials: "include", 
         headers: {
           "Content-Type": "application/json",
         },
@@ -121,7 +121,7 @@ export default function FundAccount() {
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-200">
           <h3 className="text-xl font-semibold mb-4">Quick Fund</h3>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {quickAmounts.map((amt) => (
               <button
                 key={amt}

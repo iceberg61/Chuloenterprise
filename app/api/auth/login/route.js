@@ -14,8 +14,9 @@ export async function POST(request) {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 
+    //  include role in token
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -23,17 +24,22 @@ export async function POST(request) {
     const res = NextResponse.json({
       success: true,
       token,
-      user: { id: user._id, username: user.username, email: user.email, balance: user.balance },
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        balance: user.balance,
+        role: user.role,
+      },
     });
 
     res.cookies.set('token', token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // important for HTTPS
-  sameSite: 'lax', // allow requests from your same domain frontend
-  path: '/',
-  maxAge: 60 * 60, // 1 hour
-});
-
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60,
+    });
 
     return res;
   } catch (err) {

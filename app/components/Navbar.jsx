@@ -24,11 +24,13 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
 
   return (
     <nav className="flex justify-between items-center p-4 bg-white shadow-md w-full fixed top-0 left-0 z-50">
-      <h1 className="text-2xl font-bold text-blue-600">Social Dashboard</h1>
+      <h1 className="text-2xl font-bold text-blue-600 cursor-pointer" onClick={() => router.push("/")}>
+        Chuloenterprise
+      </h1>
 
       <div className="flex items-center gap-4">
         {/* 💰 Balance */}
-        <div className="flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded-lg shadow-sm sm:px-4 sm:py-2">
+        <div className="hidden sm:flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded-lg shadow-sm sm:px-4 sm:py-2">
           <span className="ml-1 text-blue-600 font-bold">
             {new Intl.NumberFormat("en-NG", {
               style: "currency",
@@ -40,11 +42,21 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
         {/* 🚀 Fund Button */}
         <button
           onClick={() => router.push("/fund")}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 rounded-lg hover:opacity-90 transition sm:px-4 sm:py-2"
+          className="hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 rounded-lg hover:opacity-90 transition sm:px-4 sm:py-2"
           disabled={!user}
         >
           Fund Account
         </button>
+
+        {/* 🛠️ Admin Only: Manage Logs */}
+        {user?.role === "admin" && (
+          <button
+            onClick={() => router.push("/admin/logs")}
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded-lg font-medium transition sm:px-4 sm:py-2"
+          >
+            Manage Logs
+          </button>
+        )}
 
         {/* 🍔 Hamburger Menu or X (mobile) */}
         <button
