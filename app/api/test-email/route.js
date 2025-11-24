@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendEmail } from "@/lib/sendEmail";
+import  sendEmail from "@/lib/sendEmail";
 
 export async function GET() {
   await sendEmail("yourPersonalEmail@example.com", "Test Email", "<p>Working!</p>");
