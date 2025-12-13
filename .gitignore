@@ -46,3 +46,5 @@ echo "node_modules
 .env
 .env.local
 .DS_Store" > .gitignore
+Secret Hash:
+FLWSECHASH_TEST_e71520f0eb16
