@@ -45,7 +45,7 @@ export async function POST(req) {
         tx_ref: reference,
         amount,
         currency: 'NGN',
-        redirect_url: 'http://localhost:3000/fund/verify',
+        redirect_url: 'http://https://www.chuloenterprise.online//fund/verify',
         customer: {
           email: user.email,
           name: user.name || 'Chuloenterprise User',
