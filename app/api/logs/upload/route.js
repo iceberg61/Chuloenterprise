@@ -4,69 +4,46 @@ import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/dbConnect";
 import Log from "@/models/Log";
 
-export const runtime = "nodejs";
-
 export async function POST(req) {
   try {
     await dbConnect();
 
-    // Read token from httpOnly cookie
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
-
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      console.error("JWT verify failed:", err.message);
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    // Check admin role
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const bodyText = await req.text();
-    if (!bodyText) {
-      return NextResponse.json({ error: "Empty request body" }, { status: 400 });
-    }
+    const body = await req.json();
 
-    const body = JSON.parse(bodyText);
-    const {
-      platform,
-      title,
-      description = "",
-      price,
-      quantity = 1,
-      username = "",
-      password = "",
-    } = body;
+    const price = Number(body.price);
+    const quantity = Number(body.quantity || 1);
 
-    if (!platform || !title || typeof price === "undefined") {
+    if (Number.isNaN(price) || price <= 0) {
       return NextResponse.json(
-        { error: "Missing required fields (platform, title, price)" },
+        { error: "Invalid price value" },
         { status: 400 }
       );
     }
 
-    const newLog = await Log.create({
-      platform: platform.toLowerCase(),
-      title,
-      description,
-      price: Number(price),
-      quantity: Number(quantity),
-      username,
-      password,
+    const log = await Log.create({
+      platform: body.platform.toLowerCase(),
+      title: body.title,
+      description: body.description || "",
+      price,
+      quantity,
+      username: body.username || "",
+      password: body.password || "",
     });
 
-    return NextResponse.json({ success: true, log: newLog }, { status: 201 });
+    return NextResponse.json({ success: true, log }, { status: 201 });
   } catch (error) {
-    console.error("Error uploading log:", error);
+    console.error("Upload log error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

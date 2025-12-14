@@ -11,7 +11,8 @@ export async function POST(req) {
 
     const { reference } = await req.json();
 
-    const cookieStore = cookies();
+    // ✅ Await cookies
+    const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -25,14 +26,13 @@ export async function POST(req) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Disable in production immediately
-if (process.env.NODE_ENV === "production") {
-  return NextResponse.json(
-    { error: "Manual verification disabled" },
-    { status: 403 }
-  );
-}
-
+    // 🚫 Disable manual verification in production
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Manual verification disabled" },
+        { status: 403 }
+      );
+    }
 
     const payment = await Payment.findOne({
       transactionId: reference,
@@ -41,14 +41,13 @@ if (process.env.NODE_ENV === "production") {
     });
 
     if (!payment) {
-      return NextResponse.json({
-        error: "Payment not found or already processed",
-      }, { status: 404 });
+      return NextResponse.json(
+        { error: "Payment not found or already processed" },
+        { status: 404 }
+      );
     }
 
-
-
-
+    // ✅ Credit user
     payment.status = "success";
     await payment.save();
 

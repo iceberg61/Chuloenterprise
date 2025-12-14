@@ -1,36 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { User, Mail, Shield } from "lucide-react";
 
 export default function UsersPage() {
+  return (
+    <ProtectedRoute adminOnly>
+      <UsersContent />
+    </ProtectedRoute>
+  );
+}
+
+function UsersContent() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadUsers() {
-      try {
-        const res = await fetch("/api/admin/users");
-        if (!res.ok) return setUsers([]);
-
-        const data = await res.json();
-        setUsers(Array.isArray(data) ? data : []);
-      } catch (e) {
-        setUsers([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadUsers();
+    fetch("/api/admin/users")
+      .then(res => res.json())
+      .then(data => setUsers(Array.isArray(data) ? data : []))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white text-lg">
-        Loading users...
-      </div>
-    );
+  if (loading) return <div className="p-10 text-white">Loading...</div>;
+
 
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-[#0f0f1a] to-[#1a1a2e]">

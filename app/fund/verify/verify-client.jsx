@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function VerifyFundPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [message, setMessage] = useState("Verifying payment...");
+  const hasVerified = useRef(false); 
 
   useEffect(() => {
+    if (hasVerified.current) return; 
+    hasVerified.current = true;
+
     const status = searchParams.get("status");
     const txRef = searchParams.get("tx_ref");
 
@@ -24,31 +30,24 @@ export default function VerifyFundPage() {
 
     const verify = async () => {
       try {
-        const token = localStorage.getItem("token");
-
-        // const res = await fetch("/api/payments/verify-manual", {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //     Authorization: `Bearer ${token}`,
-        //   },
-        //   body: JSON.stringify({ reference: txRef }),
-        // });
-        const res =  await fetch("/api/payments/verify-manual", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ reference: txRef }),
+        const res = await fetch("/api/payments/verify-manual", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reference: txRef }),
         });
-
 
         const data = await res.json();
 
-        if (res.ok) {
+        if (res.ok && data.success) {
+          await refreshUser();
           setMessage("Payment verified successfully 🎉");
-          setTimeout(() => router.push("/fund"), 1500);
+
+          setTimeout(() => {
+            router.push("/fund");
+          }, 1200);
         } else {
           setMessage(data.error || "Verification failed");
         }
@@ -58,7 +57,7 @@ export default function VerifyFundPage() {
     };
 
     verify();
-  }, [searchParams, router]);
+  }, [searchParams, router, refreshUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

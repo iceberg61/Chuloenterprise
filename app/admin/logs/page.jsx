@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import AdminRoute from "@/components/AdminRoute";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
-import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { Pencil, Trash2, PlusCircle } from "lucide-react";
 
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+
   const [form, setForm] = useState({
     platform: "",
     title: "",
@@ -19,90 +19,96 @@ export default function AdminLogsPage() {
     username: "",
     password: "",
   });
-  const [editingId, setEditingId] = useState(null);
-
-  const { user } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user && user.role !== "admin") {
-      toast.error("Access denied. Admins only.");
-      router.push("/");
-    }
-  }, [user, router]);
 
   useEffect(() => {
     fetchLogs();
   }, []);
 
   const fetchLogs = async () => {
-    try {
-      const res = await fetch("/api/logs");
-      const data = await res.json();
-      setLogs(data);
-    } catch (error) {
-      console.error("Error fetching logs:", error);
-    }
+    const res = await fetch("/api/logs");
+    if (!res.ok) return toast.error("Access denied");
+    setLogs(await res.json());
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const url = editingId ? `/api/logs/${editingId}` : "/api/logs/upload";
+    const price = Number(form.price);
+    const quantity = Number(form.quantity || 1);
+
+    if (Number.isNaN(price) || price <= 0) {
+      return toast.error("Please enter a valid price");
+    }
+
+    const payload = {
+      ...form,
+      price,
+      quantity,
+    };
+
+    const url = editingId
+      ? `/api/logs/${editingId}`
+      : "/api/logs/upload";
+
     const method = editingId ? "PUT" : "POST";
 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
 
-    if (res.ok) {
-      toast.success(editingId ? "Log updated!" : "Log added!");
-      setForm({
-        platform: "",
-        title: "",
-        description: "",
-        price: "",
-        quantity: "",
-        username: "",
-        password: "",
-      });
-      setEditingId(null);
-      fetchLogs();
-    } else {
-      toast.error("Action failed");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return toast.error(err.error || "Action failed");
     }
+
+    toast.success(editingId ? "Log updated" : "Log created");
+
+    setEditingId(null);
+    setForm({
+      platform: "",
+      title: "",
+      description: "",
+      price: "",
+      quantity: "",
+      username: "",
+      password: "",
+    });
+
+    fetchLogs();
   };
 
+
   const handleEdit = (log) => {
+  setEditingId(log._id);
+
     setForm({
-      platform: log.platform,
-      title: log.title,
-      description: log.description,
-      price: log.price,
-      quantity: log.quantity,
-      username: log.username,
-      password: log.password,
+      platform: log.platform || "",
+      title: log.title || "",
+      description: log.description || "",
+      price: log.price?.toString() || "",
+      quantity: log.quantity?.toString() || "",
+      username: log.username || "",
+      password: log.password || "",
     });
-    setEditingId(log._id);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this log?")) return;
+    if (!confirm("Delete this log?")) return;
 
     const res = await fetch(`/api/logs/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Log deleted!");
-      fetchLogs();
-    } else {
-      toast.error("Failed to delete");
-    }
+    if (!res.ok) return toast.error("Delete failed");
+
+    toast.success("Log deleted");
+    fetchLogs();
   };
 
   return (
-    <AdminRoute>
+    <ProtectedRoute adminOnly>
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
 
@@ -148,7 +154,8 @@ export default function AdminLogsPage() {
                   </label>
                   <input
                     id={key}
-                    type="text"
+                    type={key === "price" || key === "quantity" ? "number" : "text"}
+                    min={key === "price" ? 1 : undefined}
                     placeholder={`Enter ${key}`}
                     value={form[key]}
                     onChange={(e) =>
@@ -257,6 +264,6 @@ export default function AdminLogsPage() {
           </div>
         </main>
       </div>
-    </AdminRoute>
+    </ProtectedRoute>
   );
 }

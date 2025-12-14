@@ -1,56 +1,63 @@
 import { NextResponse } from "next/server";
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from "@/lib/dbConnect";
 import Log from "@/models/Log";
+import jwt from "jsonwebtoken";
+import User from "@/models/User";
+import { cookies } from "next/headers";
 
-// Update log
-export async function PUT(req, context) {
+export const runtime = "nodejs";
+
+async function requireAdmin() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  if (!token) return null;
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
   await dbConnect();
+  const user = await User.findById(decoded.id);
 
-  const { id } = await context.params;
-  const data = await req.json();
-
-  try {
-    const updatedLog = await Log.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!updatedLog) {
-      return NextResponse.json({ error: "Log not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      message: "Log updated successfully",
-      log: updatedLog,
-    });
-  } catch (error) {
-    console.error("Error updating log:", error);
-    return NextResponse.json(
-      { error: "Failed to update log" },
-      { status: 500 }
-    );
-  }
+  return user?.role === "admin" ? user : null;
 }
 
-// Delete log
-export async function DELETE(req, context) {
+export async function PUT(req, context) {
+  const { id } = await context.params; // ✅ FIX
+
   await dbConnect();
-
-  const { id } = await context.params;
-
-  try {
-    const deleted = await Log.findByIdAndDelete(id);
-
-    if (!deleted) {
-      return NextResponse.json({ error: "Log not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "Log deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting log:", error);
-    return NextResponse.json(
-      { error: "Failed to delete log" },
-      { status: 500 }
-    );
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const data = await req.json();
+
+  // ❌ Prevent system fields from being updated
+  delete data._id;
+  delete data.__v;
+  delete data.createdAt;
+  delete data.updatedAt;
+  delete data.isSold;
+
+  const updatedLog = await Log.findByIdAndUpdate(id, data, {
+    new: true,
+  });
+
+  if (!updatedLog) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(updatedLog);
+}
+
+export async function DELETE(req, context) {
+  const { id } = await context.params; // ✅ FIX
+
+  await dbConnect();
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await Log.findByIdAndDelete(id);
+
+  return NextResponse.json({ success: true });
 }
