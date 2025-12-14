@@ -36,26 +36,27 @@ export async function POST(req) {
     });
 
     const res = await fetch('https://api.flutterwave.com/v3/payments', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-        'Content-Type': 'application/json',
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      tx_ref: reference,
+      amount,
+      currency: 'NGN',
+      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/fund/verify`,
+      customer: {
+        email: user.email,
+        name: user.name || 'Chuloenterprise User',
       },
-      body: JSON.stringify({
-        tx_ref: reference,
-        amount,
-        currency: 'NGN',
-        redirect_url: 'http://https://www.chuloenterprise.online/fund/verify',
-        customer: {
-          email: user.email,
-          name: user.name || 'Chuloenterprise User',
-        },
-        customizations: {
-          title: 'Chuloenterprise Wallet Funding',
-          description: 'Wallet funding',
-        },
-      }),
-    });
+      customizations: {
+        title: 'Chuloenterprise Wallet Funding',
+        description: 'Wallet funding',
+      },
+    }),
+  });
+
 
     const data = await res.json();
 
