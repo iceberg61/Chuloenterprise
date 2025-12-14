@@ -46,6 +46,7 @@ export async function POST(req) {
       amount,
       currency: 'NGN',
       redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/fund/verify`,
+      // redirect_url: `http://localhost:3000/fund/verify`,
       customer: {
         email: user.email,
         name: user.name || 'Chuloenterprise User',
