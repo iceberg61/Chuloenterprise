@@ -10,9 +10,11 @@ export async function POST(req) {
     const body = await req.json();
     const signature = req.headers.get("verif-hash");
 
-    if (!signature || signature !== process.env.FLUTTERWAVE_WEBHOOK_SECRET) {
-      return new Response("Unauthorized", { status: 401 });
+    if (!signature || signature !== process.env.FLW_SECRET_HASH) {
+        console.error("Invalid Flutterwave signature");
+        return new Response("Unauthorized", { status: 401 });
     }
+
 
     if (body.event === "charge.completed" && body.data.status === "successful") {
       const reference = body.data.tx_ref;
