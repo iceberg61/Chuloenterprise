@@ -6,7 +6,6 @@ import User from "@/models/User";
 export async function POST(req) {
   try {
     await dbConnect();
-
     console.log("🔔 Flutterwave webhook hit");
 
     const body = await req.json();
@@ -18,26 +17,19 @@ export async function POST(req) {
     }
 
     console.log("✅ Signature verified");
-    console.log("📦 Full payload:", JSON.stringify(body, null, 2));
+    console.log("📦 Payload:", JSON.stringify(body, null, 2));
 
-    const event = body.event;
-    const data = body.data || {};
+    // 🔑 Extract REAL fields Flutterwave sends
+    const reference = body.txRef;
+    const amount = Number(body.amount);
+    const status = body.status;
 
-    // 🚨 Only accept account transactions with money
-    if (event !== "ACCOUNT_TRANSACTION") {
-      console.log("ℹ️ Ignored event:", event);
+    if (!reference || !amount || status !== "successful") {
+      console.log("ℹ️ Ignored non-successful transaction");
       return NextResponse.json({ received: true });
     }
 
-    if (!data.tx_ref || Number(data.amount) <= 0) {
-      console.log("ℹ️ Invalid transaction data");
-      return NextResponse.json({ received: true });
-    }
-
-    const reference = data.tx_ref;
-    const amount = Number(data.amount);
-
-    console.log("🔗 tx_ref:", reference);
+    console.log("🔗 txRef:", reference);
     console.log("💰 amount:", amount);
 
     const payment = await Payment.findOne({
@@ -45,7 +37,7 @@ export async function POST(req) {
     });
 
     if (!payment) {
-      console.error("❌ Payment not found:", reference);
+      console.error("❌ Payment not found in DB:", reference);
       return NextResponse.json({ received: true });
     }
 
@@ -65,8 +57,7 @@ export async function POST(req) {
     // ✅ Mark payment successful
     payment.status = "success";
     await payment.save();
-
-    console.log("✅ Payment marked successful");
+    console.log("✅ Payment marked success");
 
     // 💳 Credit user
     const user = await User.findByIdAndUpdate(
@@ -77,7 +68,7 @@ export async function POST(req) {
 
     console.log("💳 User credited:", {
       userId: user?._id,
-      balance: user?.balance,
+      newBalance: user?.balance,
     });
 
     return NextResponse.json({ received: true });
