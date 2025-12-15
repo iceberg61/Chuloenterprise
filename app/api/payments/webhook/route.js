@@ -7,13 +7,13 @@ export async function POST(req) {
   try {
     await dbConnect();
 
-    // 🔔 LOG: webhook hit
+    // 🔔 Webhook hit
     console.log("🔔 Flutterwave webhook hit");
 
     const body = await req.json();
     const signature = req.headers.get("verif-hash");
 
-    // 🔐 Verify signature
+    // 🔐 Verify webhook signature
     if (!signature || signature !== process.env.FLW_SECRET_HASH) {
       console.error("❌ Invalid Flutterwave signature");
       return new Response("Unauthorized", { status: 401 });
@@ -21,23 +21,41 @@ export async function POST(req) {
 
     console.log("✅ Signature verified");
 
-    // Only handle successful charges
-    if (body.event !== "charge.completed" || body.data?.status !== "successful") {
-      console.log("ℹ️ Ignored event:", body.event, body.data?.status);
+    // 🧠 Normalize event + status
+    const event =
+      body.event ||
+      body?.["event.type"] ||
+      body?.data?.event;
+
+    const status = body?.data?.status;
+
+    console.log("📣 Event received:", event);
+    console.log("📣 Status received:", status);
+
+    // ❌ Ignore non-successful payments
+    if (status !== "successful") {
+      console.log("ℹ️ Ignored non-successful event");
       return NextResponse.json({ received: true });
     }
 
-    const reference = body.data.tx_ref;
-    const amount = Number(body.data.amount);
+    const reference = body?.data?.tx_ref;
+    const amount = Number(body?.data?.amount);
 
-    console.log("🔗 tx_ref from Flutterwave:", reference);
-    console.log("💰 amount from Flutterwave:", amount);
+    if (!reference) {
+      console.error("❌ Missing tx_ref in webhook payload");
+      return NextResponse.json({ received: true });
+    }
 
-    // 🔍 FIND PAYMENT (NO status filter — IMPORTANT)
-    const payment = await Payment.findOne({ transactionId: reference });
+    console.log("🔗 tx_ref:", reference);
+    console.log("💰 amount:", amount);
+
+    // 🔍 Find payment (NO status filter)
+    const payment = await Payment.findOne({
+      transactionId: reference,
+    });
 
     if (!payment) {
-      console.error("❌ Payment NOT found in DB for ref:", reference);
+      console.error("❌ Payment NOT found in DB:", reference);
       return NextResponse.json({ received: true });
     }
 
@@ -47,7 +65,7 @@ export async function POST(req) {
       amount: payment.amount,
     });
 
-    // 🛑 Idempotency: already processed
+    // 🛑 Idempotency guard
     if (payment.status === "success") {
       console.warn("⚠️ Payment already processed:", reference);
       return NextResponse.json({ received: true });
@@ -62,20 +80,20 @@ export async function POST(req) {
       return NextResponse.json({ received: true });
     }
 
-    // ✅ Mark payment successful
+    // ✅ Mark payment as successful
     payment.status = "success";
     await payment.save();
 
     console.log("✅ Payment marked as success");
 
-    // 💳 Credit user
+    // 💳 Credit user balance
     const user = await User.findByIdAndUpdate(
       payment.userId,
       { $inc: { balance: payment.amount } },
       { new: true }
     );
 
-    console.log("💳 User credited:", {
+    console.log("💳 User credited successfully:", {
       userId: user?._id.toString(),
       newBalance: user?.balance,
     });
