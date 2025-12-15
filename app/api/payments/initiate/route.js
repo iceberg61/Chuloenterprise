@@ -13,13 +13,10 @@ export async function POST(req) {
     const parsedAmount = Number(amount);
 
     if (!parsedAmount || parsedAmount < 100) {
-      return NextResponse.json(
-        { error: 'Invalid amount' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    const cookieStore = cookies();
+    const cookieStore = cookies(); // ✅ NO await
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
