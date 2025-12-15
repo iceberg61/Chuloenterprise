@@ -3,7 +3,6 @@ import dbConnect from '@/lib/dbConnect';
 import Payment from '@/models/Payment';
 import jwt from 'jsonwebtoken';
 import User from '@/models/User';
-import { cookies } from 'next/headers';
 
 export async function POST(req) {
   try {
@@ -16,8 +15,16 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    const cookieStore = cookies(); // ✅ NO await
-    const token = cookieStore.get('token')?.value;
+    // ✅ SAFE COOKIE PARSING
+    const cookieHeader = req.headers.get('cookie');
+    if (!cookieHeader) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = cookieHeader
+      .split('; ')
+      .find(c => c.startsWith('token='))
+      ?.split('=')[1];
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -53,7 +60,6 @@ export async function POST(req) {
         redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/fund/verify`,
         customer: {
           email: user.email,
-          phonenumber: user.phone || '08000000000',
           name: user.name || 'Chuloenterprise User',
         },
         customizations: {
@@ -66,7 +72,7 @@ export async function POST(req) {
     const data = await res.json();
 
     if (data.status !== 'success') {
-      console.error('Flutterwave error:', data);
+      console.error('Flutterwave init failed:', data);
       return NextResponse.json(
         { error: data.message || 'Payment initialization failed' },
         { status: 400 }
