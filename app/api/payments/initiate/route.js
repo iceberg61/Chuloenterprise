@@ -10,7 +10,16 @@ export async function POST(req) {
     await dbConnect();
 
     const { amount } = await req.json();
-    const cookieStore = await cookies();
+    const parsedAmount = Number(amount);
+
+    if (!parsedAmount || parsedAmount < 100) {
+      return NextResponse.json(
+        { error: 'Invalid amount' },
+        { status: 400 }
+      );
+    }
+
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -19,7 +28,6 @@ export async function POST(req) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
-    
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -29,49 +37,48 @@ export async function POST(req) {
 
     await Payment.create({
       userId: user._id,
-      amount,
+      amount: parsedAmount,
       method: 'flutterwave',
       transactionId: reference,
       status: 'pending',
     });
 
     const res = await fetch('https://api.flutterwave.com/v3/payments', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      tx_ref: reference,
-      amount,
-      currency: 'NGN',
-      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/fund/verify`,
-      // redirect_url: `http://localhost:3000/fund/verify`,
-      customer: {
-        email: user.email,
-        name: user.name || 'Chuloenterprise User',
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+        'Content-Type': 'application/json',
       },
-      customizations: {
-        title: 'Chuloenterprise Wallet Funding',
-        description: 'Wallet funding',
-      },
-    }),
-  });
-
+      body: JSON.stringify({
+        tx_ref: reference,
+        amount: parsedAmount,
+        currency: 'NGN',
+        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/fund/verify`,
+        customer: {
+          email: user.email,
+          phonenumber: user.phone || '08000000000',
+          name: user.name || 'Chuloenterprise User',
+        },
+        customizations: {
+          title: 'Chuloenterprise Wallet Funding',
+          description: 'Wallet funding',
+        },
+      }),
+    });
 
     const data = await res.json();
 
-    if (data.status === 'success') {
-      return NextResponse.json({ url: data.data.link });
+    if (data.status !== 'success') {
+      console.error('Flutterwave error:', data);
+      return NextResponse.json(
+        { error: data.message || 'Payment initialization failed' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ error: data.message || 'Payment failed' }, { status: 400 });
+    return NextResponse.json({ url: data.data.link });
   } catch (error) {
     console.error('Flutterwave init error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-// console.log(
-//   "Flutterwave key loaded:",
-//   process.env.FLW_SECRET_KEY?.slice(0, 12)
-// );
