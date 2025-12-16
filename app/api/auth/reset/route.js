@@ -6,35 +6,40 @@ import sendEmail from "@/lib/sendEmail";
 
 export async function POST(req) {
   try {
-    console.log("🔁 RESET PASSWORD HIT");
-
     await dbConnect();
-    const body = await req.json();
-    console.log("📦 Reset payload:", body);
 
-    const email = (body.email || "").trim().toLowerCase();
-    const otp = (body.otp || "").toString().trim();
-    const newPassword = (body.newPassword || "").trim();
+    const { email: rawEmail, otp: rawOtp, newPassword: rawPassword } =
+      await req.json();
 
-    console.log("📧 Email:", email);
-    console.log("🔢 OTP:", otp);
-    console.log("🔐 New password length:", newPassword.length);
+    const email = (rawEmail || "").trim().toLowerCase();
+    const otp = (rawOtp || "").toString().trim();
+    const newPassword = (rawPassword || "").trim();
 
     if (!email || !otp || !newPassword) {
-      console.log("❌ Missing required fields");
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email, OTP and new password are required" },
+        { status: 400 }
+      );
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("❌ User not found");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log("👤 User found:", user.email);
-    console.log("🔐 OLD HASH:", user.password);
+    if (!user.otp || user.otp !== otp) {
+      return NextResponse.json({ error: "Invalid OTP" }, { status: 400 });
+    }
 
-    // ✅ IMPORTANT FIX — DO NOT HASH HERE
+    if (!user.otpExpiry || user.otpExpiry < new Date()) {
+      return NextResponse.json({ error: "OTP expired" }, { status: 400 });
+    }
+
+    if (!user.otpVerified) {
+      return NextResponse.json({ error: "OTP not verified" }, { status: 400 });
+    }
+
+    // ✅ Let mongoose pre('save') hash the password
     user.password = newPassword;
 
     // clear OTP fields
@@ -42,23 +47,21 @@ export async function POST(req) {
     user.otpExpiry = null;
     user.otpVerified = false;
 
-    await user.save(); // 🔥 pre('save') hashes ONCE
+    await user.save();
 
-    console.log("🔐 FINAL STORED HASH:", user.password);
-
-    // optional confirmation email
+    // optional confirmation email (non-blocking)
     await sendEmail({
       to: user.email,
       subject: "Your password has been changed",
       html: `<p>Your password was successfully updated.</p>`,
     });
 
-
-    console.log("✅ Password reset completed for:", user.email);
-
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("❌ RESET ERROR:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("RESET PASSWORD ERROR:", err);
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }
