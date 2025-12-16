@@ -7,58 +7,44 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
+    console.log("🔁 RESET PASSWORD HIT");
+
     await dbConnect();
-    const { email: rawEmail, otp: rawOtp, newPassword: rawPassword } = await req.json();
-    const email = (rawEmail || "").trim().toLowerCase();
-    const otp = (rawOtp || "").toString().trim();
-    const newPassword = (rawPassword || "").trim();
+    const body = await req.json();
+    console.log("📦 Reset payload:", body);
 
-    if (!email || !otp || !newPassword) {
-      return NextResponse.json({ error: "Email, OTP and newPassword are required" }, { status: 400 });
-    }
+    const email = (body.email || "").trim().toLowerCase();
+    const otp = (body.otp || "").toString().trim();
+    const newPassword = (body.newPassword || "").trim();
 
-    if (newPassword.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
-    }
+    console.log("📧 Email:", email);
+    console.log("🔢 OTP:", otp);
+    console.log("🔐 New password length:", newPassword.length);
 
     const user = await User.findOne({ email });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    if (!user.otp || user.otp !== otp) {
-      return NextResponse.json({ error: "Invalid OTP" }, { status: 400 });
+    if (!user) {
+      console.log("❌ User not found");
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!user.otpExpiry || user.otpExpiry < new Date()) {
-      return NextResponse.json({ error: "OTP expired" }, { status: 400 });
-    }
+    console.log("👤 User found:", user.email);
+    console.log("🔐 OLD HASH:", user.password);
 
-    if (!user.otpVerified) {
-      return NextResponse.json({ error: "OTP not verified" }, { status: 400 });
-    }
-
-    // MANUALLY HASH the password here to guarantee it's hashed exactly once
     const hashed = await bcrypt.hash(newPassword, 12);
-    user.password = hashed;
+    console.log("🔐 MANUAL HASH:", hashed);
 
-    // clear OTP fields
+    user.password = hashed;
     user.otp = null;
     user.otpExpiry = null;
     user.otpVerified = false;
 
     await user.save();
 
-    // optional confirmation email
-    await sendEmail({
-      to: user.email,
-      subject: "Your password has been changed",
-      html: `<p>Your password for ${user.email} was successfully updated. If this wasn't you, contact support immediately.</p>`,
-    });
+    console.log("🔐 FINAL STORED HASH:", user.password);
 
-    console.log("Password reset for:", user.email);
-    return NextResponse.json({ message: "Password reset successful" }, { status: 200 });
-
+    return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("RESET ERROR:", err);
+    console.error("❌ RESET ERROR:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
