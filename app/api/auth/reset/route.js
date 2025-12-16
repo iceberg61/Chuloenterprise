@@ -47,11 +47,12 @@ export async function POST(req) {
     console.log("🔐 FINAL STORED HASH:", user.password);
 
     // optional confirmation email
-    await sendEmail(
-      user.email,
-      "Your password has been changed",
-      `<p>Your password was successfully updated.</p>`
-    );
+    await sendEmail({
+      to: user.email,
+      subject: "Your password has been changed",
+      html: `<p>Your password was successfully updated.</p>`,
+    });
+
 
     console.log("✅ Password reset completed for:", user.email);
 
