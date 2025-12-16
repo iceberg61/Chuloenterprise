@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import sendEmail from "@/lib/sendEmail";
-import bcrypt from "bcryptjs";
 
 export async function POST(req) {
   try {
@@ -21,6 +20,11 @@ export async function POST(req) {
     console.log("🔢 OTP:", otp);
     console.log("🔐 New password length:", newPassword.length);
 
+    if (!email || !otp || !newPassword) {
+      console.log("❌ Missing required fields");
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       console.log("❌ User not found");
@@ -30,17 +34,26 @@ export async function POST(req) {
     console.log("👤 User found:", user.email);
     console.log("🔐 OLD HASH:", user.password);
 
-    const hashed = await bcrypt.hash(newPassword, 12);
-    console.log("🔐 MANUAL HASH:", hashed);
+    // ✅ IMPORTANT FIX — DO NOT HASH HERE
+    user.password = newPassword;
 
-    user.password = hashed;
+    // clear OTP fields
     user.otp = null;
     user.otpExpiry = null;
     user.otpVerified = false;
 
-    await user.save();
+    await user.save(); // 🔥 pre('save') hashes ONCE
 
     console.log("🔐 FINAL STORED HASH:", user.password);
+
+    // optional confirmation email
+    await sendEmail(
+      user.email,
+      "Your password has been changed",
+      `<p>Your password was successfully updated.</p>`
+    );
+
+    console.log("✅ Password reset completed for:", user.email);
 
     return NextResponse.json({ success: true });
   } catch (err) {
