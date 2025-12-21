@@ -18,52 +18,31 @@ export async function POST(req) {
     const log = await Log.findById(logId);
 
     if (!user || !log) {
-      return NextResponse.json(
-        { error: "User or Log not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User or Log not found" }, { status: 404 });
     }
 
     if (qty > log.quantity) {
-      return NextResponse.json(
-        { error: "Not enough quantity available" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Not enough quantity available" }, { status: 400 });
     }
 
     const totalCost = log.price * qty;
 
     if (user.balance < totalCost) {
-      return NextResponse.json(
-        { error: "Insufficient balance" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
     }
 
-    // Deduct user's balance
+    // deduct balance
     user.balance -= totalCost;
 
-    // Deduct quantity from log
-    log.quantity -= qty;
+    // extract credentials for purchase
+    const accounts = log.credentials.slice(0, qty);
 
-    if (log.quantity === 0) {
-      log.isSold = true;
-    }
+    // update log
+    log.credentials = log.credentials.slice(qty);
+    log.quantity = log.credentials.length;
+    log.isSold = log.quantity === 0;
 
-    // Create N cloned accounts
-    const accounts = [];
-
-    for (let i = 0; i < qty; i++) {
-      accounts.push({
-        username: log.username,
-        password: log.password,
-        email: log.email,
-        emailPassword: log.emailPassword,
-        twoFA: log.twoFA,
-      });
-    }
-
-    // Create order with multiple accounts
+    // create order
     const order = await Order.create({
       userId: user._id,
       email: user.email,
@@ -77,7 +56,6 @@ export async function POST(req) {
       reference: `LOG-${Date.now()}`,
     });
 
-    // SAVE modifications
     await Promise.all([user.save(), log.save()]);
 
     return NextResponse.json({
@@ -90,9 +68,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("Buy Log Error:", error);
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

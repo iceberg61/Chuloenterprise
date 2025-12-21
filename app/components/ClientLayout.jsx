@@ -14,9 +14,9 @@ export default function ClientLayout({ children }) {
       <div className="flex-1 md:ml-64">
         <Navbar
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          isSidebarOpen={isSidebarOpen} // Pass the state
+          isSidebarOpen={isSidebarOpen} 
         />
-        <main className="mt-16 md:mt-0 p-4 md:p-6">{children}</main> {/* Increased mt-16 */}
+        <main className="mt-16 md:mt-0 p-4 md:p-6">{children}</main> 
       </div>
     </div>
   );

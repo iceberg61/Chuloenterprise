@@ -6,7 +6,6 @@ export async function GET(req) {
   try {
     await dbConnect();
 
-    //  Temporary fix: ensure all existing logs have isSold field
     await Log.updateMany(
       { isSold: { $exists: false } },
       { $set: { isSold: false } }

@@ -5,6 +5,8 @@ import {
   ChevronUp,
   Package,
   Receipt,
+  Copy,
+  Check,
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -20,7 +22,10 @@ function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const [historyOpen, setHistoryOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  // Track copied status
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -43,6 +48,15 @@ function Orders() {
     setExpanded((prev) => (prev === id ? null : id));
   };
 
+  const handleCopy = (creds, index) => {
+    navigator.clipboard.writeText(creds);
+    setCopiedIndex(index);
+
+    setTimeout(() => {
+      setCopiedIndex(null);
+    }, 2000);
+  };
+
   const totalOrders = orders.length;
   const totalSpent = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
 
@@ -55,8 +69,6 @@ function Orders() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 p-6 space-y-10">
-
-      {/* Header */}
       <div className="text-center space-y-1">
         <h1 className="text-3xl font-extrabold tracking-wide text-gray-900">
           My Orders
@@ -66,9 +78,7 @@ function Orders() {
         </p>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
         <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition flex items-center gap-4">
           <div className="bg-blue-100 p-3 rounded-xl">
             <Package className="text-blue-600" size={22} />
@@ -100,10 +110,7 @@ function Orders() {
         </div>
       </div>
 
-      {/* Order History Wrapper */}
       <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition">
-
-        {/* TOP header row */}
         <div
           className="flex items-center justify-between cursor-pointer"
           onClick={() => setHistoryOpen(!historyOpen)}
@@ -119,41 +126,36 @@ function Orders() {
           )}
         </div>
 
-        {/* COLLAPSING content */}
         <div
           className={`transition-all duration-500 overflow-hidden ${
             historyOpen ? "max-h-[2000px] mt-6" : "max-h-0"
           }`}
         >
-
           {orders.length === 0 ? (
             <p className="text-gray-500 text-sm">No orders found yet.</p>
           ) : (
             <div className="space-y-4">
-              {orders.map((order) => (
+              {orders.map((order, orderIndex) => (
                 <div
                   key={order._id}
                   className="bg-white rounded-2xl shadow-sm hover:shadow-md transition"
                 >
-
-                  {/* top card */}
                   <div
                     className="flex justify-between items-center p-5 cursor-pointer"
                     onClick={() => toggleExpand(order._id)}
                   >
                     <div>
                       <h4 className="font-semibold text-gray-900">
-                        {order.product}
+                        {order.title || order.product}
                       </h4>
 
                       <p className="text-gray-500 text-xs mt-1">
-                        ₦{order.amount.toLocaleString()} •{" "}
+                        ₦{(order.amount || 0).toLocaleString()} •{" "}
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-
                       <span
                         className={`text-xs px-3 py-1 rounded-full font-semibold ${
                           order.status === "Completed"
@@ -172,52 +174,72 @@ function Orders() {
                     </div>
                   </div>
 
-                  {/* expanding inner */}
                   <div
                     className={`transition-all duration-300 overflow-hidden ${
                       expanded === order._id ? "max-h-96" : "max-h-0"
                     }`}
                   >
-                    <div className="px-5 pb-5 text-sm text-gray-700 space-y-2 pt-2 border-t">
+                    <div className="px-5 pb-5 text-sm text-gray-700 space-y-3 pt-2 ">
+                      {order.accounts && order.accounts.length > 0 && (
+                        <div className="space-y-2">
+                          {order.accounts.map((acc, accIndex) => {
+                            const creds = `${acc.username} | ${acc.password} | ${acc.email} | ${acc.emailPassword} | ${acc.twoFA}`;
 
-                      <p>
-                        <span className="font-medium text-gray-900">Reference:</span>{" "}
-                        {order.reference}
-                      </p>
+                            const uniqueKey = `${orderIndex}-${accIndex}`;
 
-                      <p>
-                        <span className="font-medium text-gray-900">Email:</span>{" "}
-                        {order.email}
-                      </p>
+                            return (
+                              <div
+                                key={uniqueKey}
+                                className="relative bg-gray-100 p-2 rounded text-gray-800 text-sm flex items-center"
+                              >
+                                <div
+                                  className="overflow-x-auto whitespace-nowrap pr-10"
+                                  style={{
+                                    maskImage:
+                                      "linear-gradient(to right, black 70%, transparent 100%)",
+                                    WebkitMaskImage:
+                                      "linear-gradient(to right, black 70%, transparent 100%)",
+                                  }}
+                                >
+                                  {creds}
+                                </div>
 
-                      {order.username && (
-                        <p>
-                          <span className="font-medium text-gray-900">Username:</span>{" "}
-                          {order.username}
-                        </p>
+                                <button
+                                  onClick={() =>
+                                    handleCopy(creds, uniqueKey)
+                                  }
+                                  className="absolute right-2"
+                                >
+                                  {copiedIndex === uniqueKey ? (
+                                    <Check
+                                      size={18}
+                                      className="text-green-600"
+                                    />
+                                  ) : (
+                                    <Copy
+                                      size={18}
+                                      className="text-gray-600 hover:text-gray-900"
+                                    />
+                                  )}
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
 
-                      {order.password && (
-                        <p>
-                          <span className="font-medium text-gray-900">Password:</span>{" "}
-                          {order.password}
-                        </p>
-                      )}
-
                       <p>
-                        <span className="font-medium text-gray-900">Purchased:</span>{" "}
+                        <span className="font-medium">Purchased:</span>{" "}
                         {new Date(order.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
-
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-
     </div>
   );
 }

@@ -4,7 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import sendEmail from "@/lib/sendEmail";
 
-const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const OTP_TTL_MS = 10 * 60 * 1000; 
 
 export async function POST(req) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req) {
 
     user.otp = otp;
     user.otpExpiry = new Date(Date.now() + OTP_TTL_MS);
-    user.otpVerified = false; // reset verification each time
+    user.otpVerified = false; 
     await user.save();
 
     // send OTP email

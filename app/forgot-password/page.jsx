@@ -79,11 +79,11 @@ export default function ForgotPasswordPage() {
       const res = await fetch('/api/auth/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp, newPassword }), // ← ENSURE THIS
+        body: JSON.stringify({ email, otp, newPassword }), 
       });
       const data = await res.json();
 
-      console.log("Reset response:", data); // ← DEBUG
+      console.log("Reset response:", data); 
 
       if (res.ok) {
         setMessage(data.message);

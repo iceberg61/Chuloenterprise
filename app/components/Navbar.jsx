@@ -3,19 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext"; // Adjust path
+import { useAuth } from "../contexts/AuthContext"; 
 
 export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const [balance, setBalance] = useState(0);
 
-  // ✅ Refresh only once when Navbar mounts
   useEffect(() => {
-    refreshUser?.(); // safely call if exists
+    refreshUser?.(); 
   }, []);
 
-  // ✅ Update balance when user data changes
   useEffect(() => {
     if (user) {
       setBalance(user.balance || 0);
@@ -29,7 +27,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
       </h1>
 
       <div className="flex items-center gap-4">
-        {/* 💰 Balance */}
+        {/*  Balance Display */}
         <div className="hidden sm:flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded-lg shadow-sm sm:px-4 sm:py-2">
           <span className="ml-1 text-blue-600 font-bold">
             {new Intl.NumberFormat("en-NG", {
@@ -39,7 +37,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
           </span>
         </div>
 
-        {/* 🚀 Fund Button */}
+        {/*  Fund Button */}
         <button
           onClick={() => router.push("/fund")}
           className="hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 rounded-lg hover:opacity-90 transition sm:px-4 sm:py-2"
@@ -48,7 +46,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
           Fund Account
         </button>
 
-        {/* 🛠️ Admin Only: Manage Logs */}
+        {/*  Admin Only: Manage Logs */}
         {user?.role === "admin" && (
           <button
             onClick={() => router.push("/admin/logs")}
@@ -58,7 +56,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
           </button>
         )}
 
-        {/* 🍔 Hamburger Menu or X (mobile) */}
+        {/*  Hamburger Menu or X (mobile) */}
         <button
           className="sm:hidden p-2 rounded-md border border-gray-300 hover:bg-gray-100"
           onClick={onToggleSidebar}

@@ -9,7 +9,7 @@ import { Pencil, Trash2, PlusCircle } from "lucide-react";
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [showLogs, setShowLogs] = useState(true);
+  const [showLogs, setShowLogs] = useState(false);
 
 
   const emptyForm = {

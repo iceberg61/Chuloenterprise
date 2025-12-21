@@ -12,7 +12,7 @@ export async function verifyAdmin() {
 
     if (decoded.role !== "admin") return null;
 
-    return decoded; // return admin data
+    return decoded; 
   } catch (err) {
     console.error("JWT error:", err);
     return null;

@@ -15,7 +15,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    // ✅ SAFE COOKIE PARSING
+    
     const cookieHeader = req.headers.get('cookie');
     if (!cookieHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

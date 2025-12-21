@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, []);
 
-  // ✅ LOGIN FUNCTION
+  //  LOGIN FUNCTION
   const login = async (username, password, rememberMe = false) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
     return { success: false, error: data.error || 'Login failed' };
   };
 
-  // ✅ NEW SIGNUP FUNCTION
+  //  NEW SIGNUP FUNCTION
   const signup = async (username, email, password) => {
     try {
       const res = await fetch('/api/auth/signup', {
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
 
       if (!res.ok) throw new Error(data.error || 'Signup failed');
 
-      // ❗ FIX: Immediately sync cookie + user from server
+      //  FIX: Immediately sync cookie + user from server
       await fetchUser();  
 
       toast.success('Account created successfully!');
@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
   };
 
 
-  // ✅ LOGOUT FUNCTION
+  //  LOGOUT FUNCTION
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -89,7 +89,7 @@ export function AuthProvider({ children }) {
 
   const refreshUser = fetchUser;
 
-  // ✅ Include signup here
+  //  Include signup here
   return (
     <AuthContext.Provider
       value={{

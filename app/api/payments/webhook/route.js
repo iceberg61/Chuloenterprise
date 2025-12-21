@@ -14,7 +14,7 @@ export async function POST(req) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Flutterwave sends actual data inside `data`
+    
     const event = body.event;
     const data = body.data;
 

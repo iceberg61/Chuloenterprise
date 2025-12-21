@@ -20,7 +20,7 @@ export default function DetailsPage() {
   const { id } = useParams();
   const router = useRouter();
 
-  // ⬇️ get refreshUser too
+  
   const { user, refreshUser } = useAuth(); 
 
   const [log, setLog] = useState(null);

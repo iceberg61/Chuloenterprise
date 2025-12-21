@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useWindowSize } from "react-use";
-
 import {
   Instagram,
   Twitter,
@@ -27,7 +25,7 @@ export default function Home() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { width, height } = useWindowSize();
+  
 
   const platformIcons = {
     instagram: <Instagram className="text-pink-500" />,
@@ -164,7 +162,7 @@ export default function Home() {
                             </p>
 
                             {/* BACKPACK ICON ABOVE QTY BUTTON */}
-                            <div className="absolute right-4 top-20 flex flex-col items-end">
+                            <div className="absolute right-6 top-20 flex flex-col items-end">
                               {/* <Backpack  /> */}
                               <BriefcaseBusiness size={18}  className="text-gray-700 mb-1"/>
                             </div>

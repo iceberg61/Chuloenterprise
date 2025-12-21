@@ -39,17 +39,17 @@ export async function POST(req) {
       return NextResponse.json({ error: "OTP not verified" }, { status: 400 });
     }
 
-    // ✅ Let mongoose pre('save') hash the password
+    
     user.password = newPassword;
 
-    // clear OTP fields
+    
     user.otp = null;
     user.otpExpiry = null;
     user.otpVerified = false;
 
     await user.save();
 
-    // optional confirmation email (non-blocking)
+    
     await sendEmail({
       to: user.email,
       subject: "Your password has been changed",

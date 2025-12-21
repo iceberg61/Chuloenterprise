@@ -23,20 +23,19 @@ const Sidebar = ({ isOpen, onClose }) => {
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/fund", label: "Fund My Account", icon: DollarSign },
     { href: "/orders", label: "Orders", icon: ShoppingBag },
-    { href: "/purchases", label: "My Purchases", icon: ShoppingBag },
     { href: "/rules", label: "Rules", icon: BookOpen },
     { href: "/why-buy", label: "Why Buy Accounts", icon: Info },
     { href: "/customer-care", label: "Customer Care", icon: HelpCircle },
   ];
 
   const handleNavigate = (href) => {
-    onClose?.(); // 👈 safe call → no error even if undefined
+    onClose?.(); 
     router.push(href);
   };
 
   const handleLogout = () => {
     logout();
-    onClose?.(); // 👈 also safe
+    onClose?.(); 
     router.push("/login");
   };
 

@@ -19,7 +19,7 @@ async function requireAdmin() {
   return user?.role === "admin" ? user : null;
 }
 
-// ⭐ FIXED GET ROUTE ⭐
+
 export async function GET(req, { params }) {
   try {
     const { id } = await params;

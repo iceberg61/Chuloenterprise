@@ -27,7 +27,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    // filter credentials — ignore empty rows
+    
     const credentials = Array.isArray(body.credentials)
       ? body.credentials.filter(c =>
           c.username?.trim() ||
