@@ -9,16 +9,22 @@ import { Pencil, Trash2, PlusCircle } from "lucide-react";
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [showLogs, setShowLogs] = useState(true);
 
-  const [form, setForm] = useState({
+
+  const emptyForm = {
     platform: "",
     title: "",
     description: "",
     price: "",
     quantity: "",
-    username: "",
-    password: "",
-  });
+  };
+
+  const [form, setForm] = useState(emptyForm);
+
+  // NEW → credentials array
+  const [credentials, setCredentials] = useState([]);
+
 
   useEffect(() => {
     fetchLogs();
@@ -44,12 +50,10 @@ export default function AdminLogsPage() {
       ...form,
       price,
       quantity,
+      credentials,
     };
 
-    const url = editingId
-      ? `/api/logs/${editingId}`
-      : "/api/logs/upload";
-
+    const url = editingId ? `/api/logs/${editingId}` : "/api/logs/upload";
     const method = editingId ? "PUT" : "POST";
 
     const res = await fetch(url, {
@@ -66,22 +70,14 @@ export default function AdminLogsPage() {
     toast.success(editingId ? "Log updated" : "Log created");
 
     setEditingId(null);
-    setForm({
-      platform: "",
-      title: "",
-      description: "",
-      price: "",
-      quantity: "",
-      username: "",
-      password: "",
-    });
+    setForm(emptyForm);
+    setCredentials([{ username: "", password: "", email: "", emailPassword: "", twoFA: "" }]);
 
     fetchLogs();
   };
 
-
   const handleEdit = (log) => {
-  setEditingId(log._id);
+    setEditingId(log._id);
 
     setForm({
       platform: log.platform || "",
@@ -89,18 +85,18 @@ export default function AdminLogsPage() {
       description: log.description || "",
       price: log.price?.toString() || "",
       quantity: log.quantity?.toString() || "",
-      username: log.username || "",
-      password: log.password || "",
     });
+
+    setCredentials(log.credentials || []);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this log?")) return;
 
     const res = await fetch(`/api/logs/${id}`, { method: "DELETE" });
+
     if (!res.ok) return toast.error("Delete failed");
 
     toast.success("Log deleted");
@@ -114,9 +110,7 @@ export default function AdminLogsPage() {
 
         <main className="flex-1 p-8 space-y-10">
           <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-bold text-gray-800">
-              Admin Dashboard
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-800">Admin Dashboard</h2>
             <span className="text-sm text-gray-500">
               Manage and monitor uploaded social media logs
             </span>
@@ -128,13 +122,11 @@ export default function AdminLogsPage() {
               <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                 {editingId ? (
                   <>
-                    <Pencil size={20} className="text-yellow-500" />
-                    Edit Log
+                    <Pencil size={20} className="text-yellow-500" /> Edit Log
                   </>
                 ) : (
                   <>
-                    <PlusCircle size={20} className="text-blue-500" />
-                    Add New Log
+                    <PlusCircle size={20} className="text-blue-500" /> Add New Log
                   </>
                 )}
               </h3>
@@ -152,21 +144,74 @@ export default function AdminLogsPage() {
                   >
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </label>
+
                   <input
                     id={key}
-                    type={key === "price" || key === "quantity" ? "number" : "text"}
+                    type={["price", "quantity"].includes(key) ? "number" : "text"}
                     min={key === "price" ? 1 : undefined}
                     placeholder={`Enter ${key}`}
                     value={form[key]}
-                    onChange={(e) =>
-                      setForm({ ...form, [key]: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (key === "quantity") {
+                        const qty = Number(value);
+
+                        let creds = [...credentials];
+
+                        if (qty > creds.length) {
+                          while (creds.length < qty) {
+                            creds.push({
+                              username: "",
+                              password: "",
+                              email: "",
+                              emailPassword: "",
+                              twoFA: "",
+                            });
+                          }
+                        } else {
+                          creds = creds.slice(0, qty);
+                        }
+
+                        setCredentials(creds);
+                      }
+
+                      setForm({ ...form, [key]: value });
+                    }}
                     className="border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                 </div>
               ))}
 
-              <div className="col-span-full flex gap-4 mt-2">
+              {/* Dynamic Credentials */}
+              {credentials.map((cred, index) => (
+                <div
+                  key={index}
+                  className="col-span-full border rounded-lg p-4 mt-4"
+                >
+                  <h4 className="font-semibold mb-3 text-gray-700">
+                    Credential #{index + 1}
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {["username", "password", "email", "emailPassword", "twoFA"].map((field) => (
+                      <input
+                        key={field}
+                        placeholder={field}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        value={cred[field]}
+                        onChange={(e) => {
+                          const updated = [...credentials];
+                          updated[index][field] = e.target.value;
+                          setCredentials(updated);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="col-span-full flex gap-4 mt-4">
                 <button
                   type="submit"
                   className={`flex items-center justify-center gap-2 py-2 px-5 rounded-lg text-white transition ${
@@ -183,15 +228,10 @@ export default function AdminLogsPage() {
                     type="button"
                     onClick={() => {
                       setEditingId(null);
-                      setForm({
-                        platform: "",
-                        title: "",
-                        description: "",
-                        price: "",
-                        quantity: "",
-                        username: "",
-                        password: "",
-                      });
+                      setForm(emptyForm);
+                      setCredentials([
+                        { username: "", password: "", email: "", emailPassword: "", twoFA: "" }
+                      ]);
                     }}
                     className="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg transition"
                   >
@@ -204,10 +244,18 @@ export default function AdminLogsPage() {
 
           {/* Logs Table */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">
-              All Uploaded Logs
-            </h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800">All Uploaded Logs</h3>
 
+              <button
+                onClick={() => setShowLogs(!showLogs)}
+                className="text-indigo-600 text-sm font-semibold cursor-pointer hover:underline transition"
+              >
+                {showLogs ? "collapse" : "expand"}
+              </button>
+            </div>
+
+            {showLogs && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead className="bg-gray-100">
@@ -216,11 +264,10 @@ export default function AdminLogsPage() {
                     <th className="py-3 px-4 font-semibold">Title</th>
                     <th className="py-3 px-4 font-semibold">Price</th>
                     <th className="py-3 px-4 font-semibold">Quantity</th>
-                    <th className="py-3 px-4 font-semibold text-right">
-                      Actions
-                    </th>
+                    <th className="py-3 px-4 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {logs.length === 0 ? (
                     <tr>
@@ -248,6 +295,7 @@ export default function AdminLogsPage() {
                           >
                             <Pencil size={16} />
                           </button>
+
                           <button
                             onClick={() => handleDelete(log._id)}
                             className="text-red-600 hover:text-red-800 transition"
@@ -261,6 +309,7 @@ export default function AdminLogsPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         </main>
       </div>

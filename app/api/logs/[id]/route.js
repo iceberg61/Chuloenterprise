@@ -19,8 +19,27 @@ async function requireAdmin() {
   return user?.role === "admin" ? user : null;
 }
 
-export async function PUT(req, context) {
-  const { id } = await context.params; // ✅ FIX
+// ⭐ FIXED GET ROUTE ⭐
+export async function GET(req, { params }) {
+  try {
+    const { id } = await params;
+
+    await dbConnect();
+    const log = await Log.findById(id);
+
+    if (!log) {
+      return NextResponse.json({ error: "Log not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(log);
+  } catch (error) {
+    console.log("LOG FETCH ERROR:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(req, { params }) {
+  const { id } = await params;
 
   await dbConnect();
   const admin = await requireAdmin();
@@ -30,16 +49,13 @@ export async function PUT(req, context) {
 
   const data = await req.json();
 
-  // ❌ Prevent system fields from being updated
   delete data._id;
   delete data.__v;
   delete data.createdAt;
   delete data.updatedAt;
   delete data.isSold;
 
-  const updatedLog = await Log.findByIdAndUpdate(id, data, {
-    new: true,
-  });
+  const updatedLog = await Log.findByIdAndUpdate(id, data, { new: true });
 
   if (!updatedLog) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -48,8 +64,8 @@ export async function PUT(req, context) {
   return NextResponse.json(updatedLog);
 }
 
-export async function DELETE(req, context) {
-  const { id } = await context.params; // ✅ FIX
+export async function DELETE(req, { params }) {
+  const { id } = await params;
 
   await dbConnect();
   const admin = await requireAdmin();

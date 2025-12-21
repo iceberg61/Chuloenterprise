@@ -10,6 +10,7 @@ export async function POST(req) {
 
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
+
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -22,28 +23,50 @@ export async function POST(req) {
     const body = await req.json();
 
     const price = Number(body.price);
-    const quantity = Number(body.quantity || 1);
-
     if (Number.isNaN(price) || price <= 0) {
-      return NextResponse.json(
-        { error: "Invalid price value" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    const log = await Log.create({
+    // filter credentials — ignore empty rows
+    const credentials = Array.isArray(body.credentials)
+      ? body.credentials.filter(c =>
+          c.username?.trim() ||
+          c.password?.trim() ||
+          c.email?.trim() ||
+          c.emailPassword?.trim() ||
+          c.twoFA?.trim()
+        )
+      : [];
+
+    const existingLog = await Log.findOne({
       platform: body.platform.toLowerCase(),
-      title: body.title,
-      description: body.description || "",
-      price,
-      quantity,
-      username: body.username || "",
-      password: body.password || "",
+      title: body.title.trim(),
     });
 
+    let log;
+
+    if (existingLog) {
+      existingLog.credentials.push(...credentials);
+      existingLog.quantity = existingLog.credentials.length;
+      existingLog.isSold = false;  
+      await existingLog.save();
+      log = existingLog;
+    } else {
+      log = await Log.create({
+        platform: body.platform.toLowerCase(),
+        title: body.title.trim(),
+        description: body.description || "",
+        price,
+        credentials,
+        quantity: credentials.length,
+        isSold: false,
+      });
+    }
+
     return NextResponse.json({ success: true, log }, { status: 201 });
+
   } catch (error) {
-    console.error("Upload log error:", error);
+    console.error(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

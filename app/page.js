@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
-import toast from "react-hot-toast";
+import { useWindowSize } from "react-use";
+
 import {
   Instagram,
   Twitter,
@@ -14,14 +15,19 @@ import {
   Music,
   MessageCircle,
   Globe,
+  BriefcaseBusiness,
 } from "lucide-react";
+
+import Link from "next/link";
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user, logout, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [username, setUsername] = useState("User");
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const { width, height } = useWindowSize();
 
   const platformIcons = {
     instagram: <Instagram className="text-pink-500" />,
@@ -33,15 +39,28 @@ export default function Home() {
     telegram: <MessageCircle className="text-sky-400" />,
   };
 
-  // Fetch only available logs every 10 seconds
   const fetchLogs = async () => {
     try {
       const res = await fetch("/api/logs?availableOnly=true");
       if (!res.ok) throw new Error("Failed to fetch logs");
-      const data = await res.json();
-      setLogs(data);
-    } catch (error) {
-      console.error("Error fetching logs:", error);
+
+      const rawLogs = await res.json();
+
+      const grouped = rawLogs.reduce((acc, log) => {
+        const existing = acc.find((item) => item.title === log.title);
+
+        if (existing) {
+          existing.quantity += log.quantity;
+        } else {
+          acc.push({ ...log });
+        }
+
+        return acc;
+      }, []);
+
+      setLogs(grouped);
+    } catch (err) {
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -60,41 +79,8 @@ export default function Home() {
   const uniquePlatforms = [...new Set(logs.map((log) => log.platform.toLowerCase()))];
 
   const handleScroll = (id) => {
-    const section = document.getElementById(id);
-    if (section) section.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleBuy = async (logId, logTitle) => {
-    if (!user) {
-      toast.error("Please log in to make a purchase");
-      return;
-    }
-
-    const loadingToast = toast.loading(`Processing purchase for ${logTitle}...`);
-
-    try {
-      const res = await fetch("/api/orders/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user._id, logId }),
-      });
-
-      const data = await res.json();
-      toast.dismiss(loadingToast);
-
-      if (!res.ok || data.error) {
-        toast.error(data.error || "Purchase failed");
-        return;
-      }
-
-      toast.success("Purchase successful!");
-
-      await refreshUser();
-      await fetchLogs();
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error("Something went wrong, please try again.");
-    }
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -108,6 +94,7 @@ export default function Home() {
 
         <div className="flex-1 flex flex-col overflow-y-auto">
           <main className="p-6 space-y-10">
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-800">
@@ -116,15 +103,16 @@ export default function Home() {
                 <p className="text-gray-600 mt-1">
                   Available Social Media Accounts
                 </p>
+
                 <p className="text-sm text-green-600 font-medium mt-1">
                   Balance: ₦{user?.balance?.toLocaleString() || 0}
                 </p>
               </div>
 
-              <div className="relative">
+              <div>
                 <select
                   onChange={(e) => handleScroll(e.target.value)}
-                  className="border border-gray-300 bg-white text-gray-700 rounded-lg px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 bg-white text-gray-700 rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Category</option>
                   {uniquePlatforms.map((platform) => (
@@ -141,12 +129,13 @@ export default function Home() {
                 const filteredLogs = logs.filter(
                   (log) => log.platform.toLowerCase() === platform
                 );
-                const icon = platformIcons[platform] || (
-                  <Globe className="text-gray-600" />
-                );
+
+                const icon =
+                  platformIcons[platform] || <Globe className="text-gray-600" />;
 
                 return (
                   <section key={platform} id={platform} className="scroll-mt-20">
+
                     <div className="flex items-center gap-2 mb-4">
                       {icon}
                       <h3 className="text-xl font-semibold text-gray-800 capitalize">
@@ -158,40 +147,53 @@ export default function Home() {
                       <p className="text-gray-500">Loading logs...</p>
                     ) : filteredLogs.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
                         {filteredLogs.map((log) => (
-                          <div
+                          <Link
                             key={log._id}
-                            className="bg-white rounded-xl p-5 shadow hover:shadow-lg border border-gray-100 transition-transform transform hover:-translate-y-1"
+                            href={`/details/${log._id}`}
+                            className="relative bg-white rounded-xl p-5 shadow hover:shadow-lg border border-gray-100 transition hover:-translate-y-1 block cursor-pointer"
                           >
+
                             <h3 className="font-semibold text-gray-800 mb-2">
                               {log.title}
                             </h3>
-                            <p className="text-sm text-gray-500 mb-2">
+
+                            <p className="text-sm text-gray-500 mb-6">
                               {log.description || "No description provided."}
                             </p>
-                            <p className="text-sm text-gray-700 font-medium mb-4">
-                              Price: ₦{log.price.toLocaleString()}
-                            </p>
-                            <button
-                              onClick={() => handleBuy(log._id, log.title)}
-                              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-full py-2 rounded-lg hover:opacity-90 transition"
-                            >
-                              Buy Now
-                            </button>
-                          </div>
+
+                            {/* BACKPACK ICON ABOVE QTY BUTTON */}
+                            <div className="absolute right-4 top-20 flex flex-col items-end">
+                              {/* <Backpack  /> */}
+                              <BriefcaseBusiness size={18}  className="text-gray-700 mb-1"/>
+                            </div>
+
+                            {/* PRICE + QTY ROW */}
+                            <div className="flex justify-between items-center mt-10">
+                              <p className="text-[13px] text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg px-4 py-2">
+                                ₦{log.price.toLocaleString()}
+                              </p>
+
+                              <p className="text-[13px] text-white font-bold bg-black/80 rounded-lg px-4 py-2">
+                                Qty: {log.quantity || 0}
+                              </p>
+                            </div>
+
+                          </Link>
                         ))}
+
                       </div>
                     ) : (
-                      <p className="text-gray-500">
-                        No logs available for {platform}
-                      </p>
+                      <p className="text-gray-500">No logs available for that category.</p>
                     )}
                   </section>
                 );
               })
             ) : (
-              <p className="text-gray-500">No platforms available yet.</p>
+              <p className="text-gray-500">No logs available yet.</p>
             )}
+
           </main>
         </div>
       </div>

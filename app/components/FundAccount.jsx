@@ -193,7 +193,7 @@ export default function FundAccount() {
 
             <button
               onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-              className="text-indigo-600 text-sm font-semibold"
+              className="text-indigo-600 text-sm font-semibold cursor-pointer hover:underline transition"
             >
               {isHistoryExpanded ? "Collapse" : "Expand"} ({payments.length})
             </button>

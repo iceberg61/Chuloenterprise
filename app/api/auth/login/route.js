@@ -12,9 +12,6 @@ export async function POST(request) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const isMatch = await user.comparePassword(password);
-    console.log("🔑 Login attempt for:", user.email);
-    console.log("🔐 Stored hash:", user.password);
-    console.log("🔓 Password match result:", isMatch);
     if (!isMatch) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 
     //  include role in token

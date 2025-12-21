@@ -1,14 +1,26 @@
 import mongoose from "mongoose";
 
+const CredentialSchema = new mongoose.Schema({
+  username: String,
+  password: String,
+  email: String,
+  emailPassword: String,
+  twoFA: String,
+  isSold: { type: Boolean, default: false }, 
+});
+
 const LogSchema = new mongoose.Schema({
-  platform: { type: String, required: true }, // e.g. Facebook, Instagram
-  title: { type: String, required: true }, // e.g. HQ USA FACEBOOK MIGHT HAVE MULTIPLE ACCOUNTS
+  platform: { type: String, required: true },
+  title: { type: String, required: true },
   description: { type: String },
-  price: { type: Number, required: true }, // e.g. 3500
+  price: { type: Number, required: true },
+
   quantity: { type: Number, default: 0 },
-  username: { type: String, default: "" }, // ✅ New field
-  password: { type: String, default: "" }, // ✅ New field
-  isSold: { type: Boolean, default: false }, // ✅ Existing field
+
+  credentials: { type: [CredentialSchema], default: [] },
+
+  isSold: { type: Boolean, default: false },
+
   createdAt: { type: Date, default: Date.now },
 });
 
