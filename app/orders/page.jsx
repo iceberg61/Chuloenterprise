@@ -68,7 +68,7 @@ function Orders() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 p-6 space-y-10">
+    <div className="min-h-screen bg-gray-50 text-gray-900 px-3 py-6 space-y-10 max-w-screen-sm mx-auto overflow-x-hidden">
       <div className="text-center space-y-1">
         <h1 className="text-3xl font-extrabold tracking-wide text-gray-900">
           My Orders
@@ -141,7 +141,7 @@ function Orders() {
                   className="bg-white rounded-2xl shadow-sm hover:shadow-md transition"
                 >
                   <div
-                    className="flex justify-between items-center p-5 cursor-pointer"
+                    className="fflex justify-between items-center p-4 sm:p-5 cursor-pointer"
                     onClick={() => toggleExpand(order._id)}
                   >
                     <div>
@@ -193,7 +193,7 @@ function Orders() {
                                 className="relative bg-gray-100 p-2 rounded text-gray-800 text-sm flex items-center"
                               >
                                 <div
-                                  className="overflow-x-auto whitespace-nowrap pr-10"
+                                  className="break-all pr-12"
                                   style={{
                                     maskImage:
                                       "linear-gradient(to right, black 70%, transparent 100%)",
