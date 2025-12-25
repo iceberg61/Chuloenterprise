@@ -68,7 +68,7 @@ function Orders() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 px-3 py-6 space-y-10 max-w-screen-sm mx-auto overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 text-gray-900 px-3 py-6 space-y-10  mx-auto overflow-x-hidden">
       <div className="text-center space-y-1">
         <h1 className="text-3xl font-extrabold tracking-wide text-gray-900">
           My Orders
