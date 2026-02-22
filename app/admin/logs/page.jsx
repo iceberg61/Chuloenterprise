@@ -11,7 +11,6 @@ export default function AdminLogsPage() {
   const [editingId, setEditingId] = useState(null);
   const [showLogs, setShowLogs] = useState(false);
 
-
   const emptyForm = {
     platform: "",
     title: "",
@@ -20,11 +19,19 @@ export default function AdminLogsPage() {
     quantity: "",
   };
 
-  const [form, setForm] = useState(emptyForm);
+  const emptyCredential = {
+    username: "",
+    password: "",
+    email: "",
+    emailPassword: "",
+    twoFA: "",
+  };
 
-  // NEW → credentials array
+  const [form, setForm] = useState(emptyForm);
   const [credentials, setCredentials] = useState([]);
 
+  // ✅ NEW → logo file state
+  const [logoFile, setLogoFile] = useState(null);
 
   useEffect(() => {
     fetchLogs();
@@ -46,20 +53,30 @@ export default function AdminLogsPage() {
       return toast.error("Please enter a valid price");
     }
 
-    const payload = {
-      ...form,
-      price,
-      quantity,
-      credentials,
-    };
+    if (credentials.length === 0) {
+      return toast.error("At least one credential is required");
+    }
+
+    // ✅ SWITCH TO FORMDATA
+    const formData = new FormData();
+
+    formData.append("platform", form.platform);
+    formData.append("title", form.title);
+    formData.append("description", form.description);
+    formData.append("price", price);
+    formData.append("quantity", quantity);
+    formData.append("credentials", JSON.stringify(credentials));
+
+    if (logoFile) {
+      formData.append("logo", logoFile);
+    }
 
     const url = editingId ? `/api/logs/${editingId}` : "/api/logs/upload";
     const method = editingId ? "PUT" : "POST";
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: formData,// ❌ NO JSON HEADERS
     });
 
     if (!res.ok) {
@@ -71,7 +88,8 @@ export default function AdminLogsPage() {
 
     setEditingId(null);
     setForm(emptyForm);
-    setCredentials([{ username: "", password: "", email: "", emailPassword: "", twoFA: "" }]);
+    setCredentials([]);
+    setLogoFile(null);
 
     fetchLogs();
   };
@@ -87,7 +105,11 @@ export default function AdminLogsPage() {
       quantity: log.quantity?.toString() || "",
     });
 
-    setCredentials(log.credentials || []);
+    setCredentials(
+      log.credentials && log.credentials.length > 0
+        ? log.credentials
+        : [emptyCredential]
+    );
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -157,23 +179,17 @@ export default function AdminLogsPage() {
                       if (key === "quantity") {
                         const qty = Number(value);
 
-                        let creds = [...credentials];
+                        if (!Number.isNaN(qty) && qty > 0) {
+                          let creds = [];
 
-                        if (qty > creds.length) {
-                          while (creds.length < qty) {
-                            creds.push({
-                              username: "",
-                              password: "",
-                              email: "",
-                              emailPassword: "",
-                              twoFA: "",
-                            });
+                          for (let i = 0; i < qty; i++) {
+                            creds.push(credentials[i] || { ...emptyCredential });
                           }
-                        } else {
-                          creds = creds.slice(0, qty);
-                        }
 
-                        setCredentials(creds);
+                          setCredentials(creds);
+                        } else {
+                          setCredentials([]);
+                        }
                       }
 
                       setForm({ ...form, [key]: value });
@@ -182,6 +198,20 @@ export default function AdminLogsPage() {
                   />
                 </div>
               ))}
+
+              {/* ✅ LOGO INPUT (NEW) */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Logo
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setLogoFile(e.target.files[0])}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+              </div>
 
               {/* Dynamic Credentials */}
               {credentials.map((cred, index) => (
@@ -229,9 +259,8 @@ export default function AdminLogsPage() {
                     onClick={() => {
                       setEditingId(null);
                       setForm(emptyForm);
-                      setCredentials([
-                        { username: "", password: "", email: "", emailPassword: "", twoFA: "" }
-                      ]);
+                      setCredentials([]);
+                      setLogoFile(null);
                     }}
                     className="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg transition"
                   >
@@ -242,6 +271,7 @@ export default function AdminLogsPage() {
             </form>
           </div>
 
+          
           {/* Logs Table */}
           <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
             <div className="flex justify-between items-center mb-6">
@@ -256,59 +286,59 @@ export default function AdminLogsPage() {
             </div>
 
             {showLogs && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse">
-                <thead className="bg-gray-100">
-                  <tr className="text-left text-gray-700">
-                    <th className="py-3 px-4 font-semibold">Platform</th>
-                    <th className="py-3 px-4 font-semibold">Title</th>
-                    <th className="py-3 px-4 font-semibold">Price</th>
-                    <th className="py-3 px-4 font-semibold">Quantity</th>
-                    <th className="py-3 px-4 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {logs.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-center py-6 text-gray-500 italic"
-                      >
-                        No logs available
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead className="bg-gray-100">
+                    <tr className="text-left text-gray-700">
+                      <th className="py-3 px-4 font-semibold">Platform</th>
+                      <th className="py-3 px-4 font-semibold">Title</th>
+                      <th className="py-3 px-4 font-semibold">Price</th>
+                      <th className="py-3 px-4 font-semibold">Quantity</th>
+                      <th className="py-3 px-4 font-semibold text-right">Actions</th>
                     </tr>
-                  ) : (
-                    logs.map((log) => (
-                      <tr
-                        key={log._id}
-                        className="border-b last:border-0 hover:bg-gray-50 transition"
-                      >
-                        <td className="py-3 px-4">{log.platform}</td>
-                        <td className="py-3 px-4">{log.title}</td>
-                        <td className="py-3 px-4">₦{log.price}</td>
-                        <td className="py-3 px-4">{log.quantity}</td>
-                        <td className="py-3 px-4 text-right space-x-3">
-                          <button
-                            onClick={() => handleEdit(log)}
-                            className="text-blue-600 hover:text-blue-800 transition"
-                          >
-                            <Pencil size={16} />
-                          </button>
+                  </thead>
 
-                          <button
-                            onClick={() => handleDelete(log._id)}
-                            className="text-red-600 hover:text-red-800 transition"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                  <tbody>
+                    {logs.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="text-center py-6 text-gray-500 italic"
+                        >
+                          No logs available
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      logs.map((log) => (
+                        <tr
+                          key={log._id}
+                          className="border-b last:border-0 hover:bg-gray-50 transition"
+                        >
+                          <td className="py-3 px-4">{log.platform}</td>
+                          <td className="py-3 px-4">{log.title}</td>
+                          <td className="py-3 px-4">₦{log.price}</td>
+                          <td className="py-3 px-4">{log.quantity}</td>
+                          <td className="py-3 px-4 text-right space-x-3">
+                            <button
+                              onClick={() => handleEdit(log)}
+                              className="text-blue-600 hover:text-blue-800 transition"
+                            >
+                              <Pencil size={16} />
+                            </button>
+
+                            <button
+                              onClick={() => handleDelete(log._id)}
+                              className="text-red-600 hover:text-red-800 transition"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </main>

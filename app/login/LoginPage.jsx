@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
@@ -51,11 +52,12 @@ export default function LoginPage() {
     } else {
       setError(result.error || 'Login failed');
     }
+
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-200 to-blue-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-200 to-blue-100 p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
 
         {funded && (
@@ -64,13 +66,33 @@ export default function LoginPage() {
           </div>
         )}
 
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">Welcome Back</h2>
+        {/* LOGO */}
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/client-photo.jpeg"
+            alt="App Logo"
+            width={90}
+            height={90}
+            className="object-contain rounded-full shadow-md"
+            priority
+          />
+        </div>
 
-        {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
+        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">
+          Welcome Back
+        </h2>
+
+        {error && (
+          <p className="text-red-500 text-center mb-4 font-medium">
+            {error}
+          </p>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Username or Email</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Username or Email
+            </label>
             <input
               type="text"
               placeholder="you@example.com or username"
@@ -82,7 +104,9 @@ export default function LoginPage() {
           </div>
 
           <div className="relative">
-            <label className="block text-gray-700 font-medium mb-1">Password</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Password
+            </label>
             <input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
@@ -110,7 +134,10 @@ export default function LoginPage() {
               />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
-            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
               Forgot password?
             </Link>
           </div>
@@ -118,7 +145,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full bg-linear-to-br from-indigo-600 to-blue-600 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {loading ? (
               <>
@@ -126,13 +153,16 @@ export default function LoginPage() {
                 Logging in...
               </>
             ) : (
-              'Log In'
+              "Log In"
             )}
           </button>
 
           <p className="text-center text-gray-600 mt-4">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-600 font-semibold hover:underline">
+            <Link
+              href="/signup"
+              className="text-blue-600 font-semibold hover:underline"
+            >
               Sign Up
             </Link>
           </p>

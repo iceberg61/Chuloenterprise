@@ -40,7 +40,7 @@ export default function Navbar({ onToggleSidebar, isSidebarOpen }) {
         {/*  Fund Button */}
         <button
           onClick={() => router.push("/fund")}
-          className="hidden sm:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 rounded-lg hover:opacity-90 transition sm:px-4 sm:py-2"
+          className="hidden sm:block bg-linear-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 rounded-lg hover:opacity-90 transition sm:px-4 sm:py-2"
           disabled={!user}
         >
           Fund Account

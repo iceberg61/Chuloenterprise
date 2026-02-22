@@ -27,7 +27,7 @@ function UsersContent() {
 
 
   return (
-    <div className="min-h-screen p-8 bg-gradient-to-br from-[#0f0f1a] to-[#1a1a2e]">
+    <div className="min-h-screen p-8 bg-linear-to-br from-[#0f0f1a] to-[#1a1a2e]">
       
       {/* HEADER */}
       <div className="mb-10">

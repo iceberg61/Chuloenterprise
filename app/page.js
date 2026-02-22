@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -87,12 +88,28 @@ export default function Home() {
         <div className="flex-1 flex flex-col overflow-y-auto">
           <main className="p-6 space-y-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-800">
-                  Welcome, {username}!
+              <div
+                className="
+                  inline-block
+                  px-8 py-6
+                  rounded-2xl
+                  border border-blue-300
+                  bg-blue-50
+                  shadow-sm
+                "
+              >
+                <h2 className="text-2xl font-semibold text-blue-800 flex items-center gap-2">
+                  Welcome, {username}
+                  <span className="text-2xl inline-block animate-[wave_1.5s_ease-in-out_infinite]">
+                    👋
+                  </span>
                 </h2>
-                <p className="text-gray-600 mt-1">Available Social Media Accounts</p>
-                <p className="text-sm text-green-600 font-medium mt-1">
+
+                <p className="text-blue-600 mt-3">
+                  Available Social Media Accounts
+                </p>
+
+                <p className="text-green-600 font-semibold mt-2">
                   Balance: ₦{user?.balance?.toLocaleString() || 0}
                 </p>
               </div>
@@ -115,17 +132,37 @@ export default function Home() {
                 (log) => log.platform.toLowerCase() === platform
               );
 
-              const icon = platformIcons[platform] || (
-                <Globe className="text-gray-600" />
+             const platformLogo = filteredLogs.find((log) => log.logo)?.logo;
+              const icon = platformLogo ? (
+                <Image
+                  src={platformLogo}
+                  alt={platform}
+                  width={24}
+                  height={24}
+                  className="object-contain"
+                />
+              ) : (
+                platformIcons[platform] || <Globe className="text-gray-600" />
               );
 
               return (
                 <section key={platform} id={platform} className="scroll-mt-20">
-                  <div className="flex items-center gap-2 mb-4">
-                    {icon}
-                    <h3 className="text-xl font-semibold text-gray-800 capitalize">
-                      {platform}
-                    </h3>
+                  <div className="mb-6">
+                    <div
+                      className="
+                        inline-flex items-center gap-3
+                        px-6 py-3
+                        rounded-2xl
+                        border border-blue-400
+                        bg-gradient-to-r from-blue-50 to-indigo-50
+                        shadow-md
+                      "
+                    >
+                      {icon}
+                      <h3 className="text-lg md:text-xl font-semibold text-blue-800 capitalize">
+                        {platform}
+                      </h3>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -156,7 +193,7 @@ export default function Home() {
                               <h3 className="font-semibold text-gray-800 mb-2 text-sm md:text-base">
                                 {log.title}
                               </h3>
-                              <p className="text-sm text-gray-500 leading-relaxed">
+                              <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
                                 {log.description || "No description provided."}
                               </p>
                             </div>
@@ -166,7 +203,7 @@ export default function Home() {
                             </div>
 
                             <div className="flex justify-between items-center pt-4">
-                              <p className="text-[13px] text-white font-bold bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg px-4 py-2">
+                              <p className="text-[13px] text-white font-bold bg-linear-to-r from-blue-600 to-indigo-600 rounded-lg px-4 py-2">
                                 ₦{log.price.toLocaleString()}
                               </p>
                               <p className="text-[13px] text-white font-bold bg-black/80 rounded-lg px-4 py-2">
@@ -193,7 +230,7 @@ export default function Home() {
             <span className="absolute inset-0 rounded-full bg-blue-500 opacity-20 animate-ping delay-150" />
 
             <div className="relative z-10 flex items-center justify-center w-14 h-14 rounded-full
-              bg-gradient-to-tr from-sky-400 to-blue-600
+              bg-linear-to-br from-sky-400 to-blue-600
               shadow-[0_0_30px_rgba(56,189,248,0.9)]
               transition-transform duration-300 hover:scale-110"
             >

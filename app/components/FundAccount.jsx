@@ -90,7 +90,7 @@ export default function FundAccount() {
   const quickAmounts = [1000, 5000, 10000, 25000, 50000];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 p-6 flex items-center justify-center">
       <div className="max-w-6xl w-full">
 
         {/* Header */}
@@ -136,7 +136,7 @@ export default function FundAccount() {
                 className={`p-3 rounded-lg font-medium transition-all ${
                   !user
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                    : "bg-linear-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
                 }`}
               >
                 ₦{amt.toLocaleString()}
@@ -155,8 +155,8 @@ export default function FundAccount() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount in Naira"
-              min="100"
-              step="100"
+              min="1000"
+              step="1000"
               disabled={!user || loading}
               className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
@@ -167,7 +167,7 @@ export default function FundAccount() {
               className={`w-full px-6 py-3 rounded-lg font-semibold text-white transition-all ${
                 loading || !user || !amount
                   ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                  : "bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               }`}
             >
               {loading ? "Redirecting to secure payment..." : "Add Funds"}

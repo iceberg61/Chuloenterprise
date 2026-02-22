@@ -119,8 +119,15 @@ export default function DetailsPage() {
     telegram: <MessageCircle size={34} />,
   };
 
-  const icon =
-    platformIcons[log.platform?.toLowerCase()] || <Globe size={34} />;
+  const icon = log.logo ? (
+    <img
+      src={log.logo}
+      alt={log.title}
+      className="w-16 h-16 object-contain rounded-full"
+    />
+  ) : (
+    platformIcons[log.platform?.toLowerCase()] || <Globe size={34} />
+  );
 
   const totalPrice = qty * log.price;
 
@@ -129,7 +136,7 @@ export default function DetailsPage() {
       {confettiOn && <Confetti />}
 
       <div className="flex justify-center mb-6">
-        <div className="bg-gray-900 text-white rounded-full w-20 h-20 sm:w-24 sm:h-24 flex justify-center items-center shadow-lg">
+        <div className=" text-white rounded-full w-20 h-20 sm:w-24 sm:h-24 flex justify-center items-center shadow-lg">
           {icon}
         </div>
       </div>

@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import dbConnect from "@/lib/dbConnect";
 import Log from "@/models/Log";
+import cloudinary from "@/lib/cloudinary"; // ✅ NEW
+
+export const runtime = "nodejs";
 
 export async function POST(req) {
   try {
@@ -20,53 +23,56 @@ export async function POST(req) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const formData = await req.formData();
 
-    const price = Number(body.price);
+    const platform = formData.get("platform");
+    const title = formData.get("title");
+    const description = formData.get("description");
+    const price = Number(formData.get("price"));
+    const credentials = JSON.parse(formData.get("credentials") || "[]");
+    const file = formData.get("logo");
+
     if (Number.isNaN(price) || price <= 0) {
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
     }
 
-    
-    const credentials = Array.isArray(body.credentials)
-      ? body.credentials.filter(c =>
-          c.username?.trim() ||
-          c.password?.trim() ||
-          c.email?.trim() ||
-          c.emailPassword?.trim() ||
-          c.twoFA?.trim()
-        )
-      : [];
+    let logoPath = "";
 
-    const existingLog = await Log.findOne({
-      platform: body.platform.toLowerCase(),
-      title: body.title.trim(),
-    });
+    // ✅ CLOUDINARY UPLOAD START
+    if (file && typeof file !== "string") {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
 
-    let log;
+      const base64Image = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-    if (existingLog) {
-      existingLog.credentials.push(...credentials);
-      existingLog.quantity = existingLog.credentials.length;
-      existingLog.isSold = false;  
-      await existingLog.save();
-      log = existingLog;
-    } else {
-      log = await Log.create({
-        platform: body.platform.toLowerCase(),
-        title: body.title.trim(),
-        description: body.description || "",
-        price,
-        credentials,
-        quantity: credentials.length,
-        isSold: false,
+      const uploaded = await cloudinary.uploader.upload(base64Image, {
+        folder: "social-logs",
+        transformation: [
+          { width: 300, height: 300, crop: "limit" },
+          { quality: "auto" },
+          { fetch_format: "auto" },
+        ],
       });
+
+      logoPath = uploaded.secure_url;
     }
+    // ✅ CLOUDINARY UPLOAD END
+
+    const log = await Log.create({
+      platform: platform.toLowerCase(),
+      title: title.trim(),
+      description: description || "",
+      price,
+      credentials,
+      quantity: credentials.length,
+      logo: logoPath,
+      isSold: false,
+    });
 
     return NextResponse.json({ success: true, log }, { status: 201 });
 
   } catch (error) {
-    console.error(error);
+    console.error("POST ERROR:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

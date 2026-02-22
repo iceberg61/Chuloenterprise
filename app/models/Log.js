@@ -15,6 +15,8 @@ const LogSchema = new mongoose.Schema({
   description: { type: String },
   price: { type: Number, required: true },
 
+  logo: String,
+
   quantity: { type: Number, default: 0 },
 
   credentials: { type: [CredentialSchema], default: [] },
